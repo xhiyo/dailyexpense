@@ -38,6 +38,20 @@ export const ExpenseList = ({
     return 0;
   };
 
+  const getTimeString = (item) => {
+    if (item.time && item.time.trim() !== '') return item.time;
+    const ts = getCreatedTimestamp(item);
+    if (ts && ts > 1000000000000) {
+      const d = new Date(ts);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+    return '00:00';
+  };
+
+  const getExpenseDisplayTime = (item) => {
+    return getTimeString(item);
+  };
+
   // Filter & sort expenses
   const filteredExpenses = useMemo(() => {
     let list = expenses;
@@ -58,7 +72,7 @@ export const ExpenseList = ({
 
     // Category filter
     if (selectedCategory !== 'all') {
-      list = list.filter(e => e.categoryId === selectedCategory);
+      list = list.filter(e => (e.categoryId || e.category) === selectedCategory);
     }
 
     // Sorting
@@ -68,7 +82,7 @@ export const ExpenseList = ({
         if (diff !== 0) return diff;
         const dateDiff = (b.date || '').localeCompare(a.date || '');
         if (dateDiff !== 0) return dateDiff;
-        const timeDiff = (b.time || '00:00').localeCompare(a.time || '00:00');
+        const timeDiff = getTimeString(b).localeCompare(getTimeString(a));
         if (timeDiff !== 0) return timeDiff;
         return getCreatedTimestamp(b) - getCreatedTimestamp(a);
       }
@@ -77,21 +91,21 @@ export const ExpenseList = ({
         if (diff !== 0) return diff;
         const dateDiff = (b.date || '').localeCompare(a.date || '');
         if (dateDiff !== 0) return dateDiff;
-        const timeDiff = (b.time || '00:00').localeCompare(a.time || '00:00');
+        const timeDiff = getTimeString(b).localeCompare(getTimeString(a));
         if (timeDiff !== 0) return timeDiff;
         return getCreatedTimestamp(b) - getCreatedTimestamp(a);
       }
       if (sortBy === 'time-asc') {
         const dateDiff = (a.date || '').localeCompare(b.date || '');
         if (dateDiff !== 0) return dateDiff;
-        const timeDiff = (a.time || '00:00').localeCompare(b.time || '00:00');
+        const timeDiff = getTimeString(a).localeCompare(getTimeString(b));
         if (timeDiff !== 0) return timeDiff;
         return getCreatedTimestamp(a) - getCreatedTimestamp(b);
       }
       // default: 'time-desc' (Newest)
       const dateDiff = (b.date || '').localeCompare(a.date || '');
       if (dateDiff !== 0) return dateDiff;
-      const timeDiff = (b.time || '00:00').localeCompare(a.time || '00:00');
+      const timeDiff = getTimeString(b).localeCompare(getTimeString(a));
       if (timeDiff !== 0) return timeDiff;
       return getCreatedTimestamp(b) - getCreatedTimestamp(a);
     });
@@ -257,7 +271,7 @@ export const ExpenseList = ({
                   <div className="tx-sub-row">
                     <span className="tx-time">
                       {expense.date !== selectedDate ? `${expense.date} • ` : ''}
-                      {expense.time || '--:--'}
+                      {getExpenseDisplayTime(expense)}
                     </span>
                     <span className="tx-bullet">•</span>
                     <span className="tx-method">{getMethodName(expense.paymentMethod)}</span>

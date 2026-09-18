@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, FileSpreadsheet } from 'lucide-react';
+import { Check, FileSpreadsheet, CloudUpload, CloudDownload, RefreshCw } from 'lucide-react';
 import { CURRENCIES, getBudgetPresets, convertCurrencyAmount } from '../data/categories';
 import { formatCurrency, ACCENT_COLORS } from '../utils/storage';
 import { UserAvatar } from './UserAvatar';
@@ -20,11 +20,26 @@ export const SettingsPage = ({
   onOpenAuthModal,
   onLogout,
   onResetData,
+  onSyncToCloud,
   onBackToDashboard,
   onOpenCookieSettings
 }) => {
   const { t, language, setLanguage } = useTranslation();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [syncStatus, setSyncStatus] = useState(null); // null | 'syncing' | 'done' | 'error'
+
+  const handleSyncNow = async () => {
+    if (!onSyncToCloud) return;
+    setSyncStatus('syncing');
+    try {
+      await onSyncToCloud();
+      setSyncStatus('done');
+      setTimeout(() => setSyncStatus(null), 4000);
+    } catch {
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus(null), 4000);
+    }
+  };
 
   const handleConfirmReset = () => {
     onResetData();
@@ -482,7 +497,60 @@ export const SettingsPage = ({
           </div>
         </div>
 
-        {/* Card 7: Zona Berbahaya (Danger Zone) */}
+        {/* Card 7: Sinkronisasi Otomatis Cloud */}
+        {onSyncToCloud && (
+          <div className="settings-modern-card">
+            <div className="settings-modern-card-header">
+              <h4 className="settings-card-title">☁️ {language === 'en' ? 'Automatic Real-Time Cloud Sync' : 'Sinkronisasi Otomatis Real-Time'}</h4>
+              <p className="settings-card-subtitle">
+                {language === 'en'
+                  ? 'All expenses and daily spending limits automatically sync between Laptop and Mobile.'
+                  : 'Semua transaksi dan batas limit harian otomatis tersinkronisasi antara HP dan Laptop.'}
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(34, 197, 94, 0.12)',
+                color: 'var(--color-success, #22c55e)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: '600',
+                width: 'fit-content'
+              }}>
+                <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'currentColor' }}></span>
+                {language === 'en' ? 'Status: Connected & Auto-Syncing' : 'Status: Terhubung & Sinkron Otomatis Aktif'}
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                {language === 'en'
+                  ? 'No manual push or pull needed. Whenever you add or edit transactions or change your spending limit on any device, it is updated everywhere automatically.'
+                  : 'Tidak perlu push atau pull manual. Setiap kali Anda mencatat transaksi atau mengubah batas limit di HP maupun Laptop, data akan langsung terupdate otomatis.'}
+              </p>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleSyncNow}
+                disabled={syncStatus === 'syncing'}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', width: 'fit-content', cursor: 'pointer' }}
+              >
+                {syncStatus === 'syncing' ? (
+                  <><RefreshCw size={15} className="spin-icon" /> {language === 'en' ? 'Syncing...' : 'Menyinkronkan...'}</>
+                ) : syncStatus === 'done' ? (
+                  <><Check size={15} color="var(--color-success, #22c55e)" /> {language === 'en' ? 'Synced!' : 'Tersinkronkan!'}</>
+                ) : syncStatus === 'error' ? (
+                  <><RefreshCw size={15} /> {language === 'en' ? 'Retry Sync' : 'Coba Lagi'}</>
+                ) : (
+                  <><RefreshCw size={15} /> {language === 'en' ? 'Sync Now' : 'Sinkronkan Sekarang'}</>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Card 8: Zona Berbahaya (Danger Zone) */}
         <div className="settings-modern-card card-danger-modern">
           <div className="settings-modern-card-header">
             <h4 className="settings-card-title text-danger">{t('settings.dangerTitle')}</h4>

@@ -320,17 +320,46 @@ export const logoutFirebaseUser = async () => {
   saveFirebaseAuth(null);
 };
 
-// 4. Save/Sync User Profile to Firestore Cloud Database
+// 4. Save Daily Budget specifically to Firestore Cloud Database (isolated with updateMask)
+export const syncDailyBudgetToFirestore = async (userId, idToken, budget) => {
+  if (!userId || userId === 'guest') return false;
+  const cleanId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const docPath = `${FIRESTORE_BASE}/users/${cleanId}?updateMask.fieldPaths=dailyBudget&updateMask.fieldPaths=updatedAt`;
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
+  const fields = {
+    dailyBudget: { doubleValue: Number(budget) || 0 },
+    updatedAt: { stringValue: new Date().toISOString() }
+  };
+
+  try {
+    let res = await fetch(docPath, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ fields })
+    });
+    if (!res.ok && headers['Authorization']) {
+      res = await fetch(docPath, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields })
+      });
+    }
+    return res.ok;
+  } catch (err) {
+    console.warn('Firestore sync daily budget error:', err);
+    return false;
+  }
+};
+
+// 4b. Save/Sync User Profile to Firestore Cloud Database (using updateMask to preserve dailyBudget)
 export const syncUserProfileToFirestore = async (user, additionalData = {}) => {
   if (!user || !user.id) return false;
   const cleanId = String(user.id).replace(/[^a-zA-Z0-9_-]/g, '_');
-  const docPath = `${FIRESTORE_BASE}/users/${cleanId}`;
 
-  const headers = { 'Content-Type': 'application/json' };
-  if (user.idToken) {
-    headers['Authorization'] = `Bearer ${user.idToken}`;
-  }
-
+  const updateMaskPaths = ['id', 'name', 'email', 'avatar', 'role', 'provider', 'updatedAt'];
   const fields = {
     id: { stringValue: String(user.id) },
     name: { stringValue: String(user.name || user.email?.split('@')[0] || cleanId) },
@@ -343,14 +372,23 @@ export const syncUserProfileToFirestore = async (user, additionalData = {}) => {
 
   if (user.isNewRegistration || !user.createdAt) {
     fields.createdAt = { stringValue: new Date().toISOString() };
+    updateMaskPaths.push('createdAt');
   } else {
     fields.createdAt = { stringValue: String(user.createdAt) };
   }
+
+  // Only include and update dailyBudget if explicitly provided!
   if (additionalData.dailyBudget !== undefined) {
     fields.dailyBudget = { doubleValue: Number(additionalData.dailyBudget) || 0 };
+    updateMaskPaths.push('dailyBudget');
   }
-  if (additionalData.budgetUpdatedAt !== undefined) {
-    fields.budgetUpdatedAt = { integerValue: String(Number(additionalData.budgetUpdatedAt)) };
+
+  const queryParams = updateMaskPaths.map(p => `updateMask.fieldPaths=${p}`).join('&');
+  const docPath = `${FIRESTORE_BASE}/users/${cleanId}?${queryParams}`;
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (user.idToken) {
+    headers['Authorization'] = `Bearer ${user.idToken}`;
   }
 
   try {
@@ -359,7 +397,6 @@ export const syncUserProfileToFirestore = async (user, additionalData = {}) => {
       headers,
       body: JSON.stringify({ fields })
     });
-    // If auth header failed (e.g. 401 or 403), retry with open rules header
     if (!res.ok && headers['Authorization']) {
       res = await fetch(docPath, {
         method: 'PATCH',
@@ -368,7 +405,6 @@ export const syncUserProfileToFirestore = async (user, additionalData = {}) => {
       });
     }
     if (res.ok) {
-      console.log('✅ User data successfully synced to Firestore:', cleanId);
       return true;
     }
     return false;
@@ -408,6 +444,16 @@ export const syncExpenseToFirestore = async (userId, idToken, expense) => {
     headers['Authorization'] = `Bearer ${idToken}`;
   }
 
+  // Ensure time is formatted if empty
+  let timeVal = expense.time || '';
+  if (!timeVal) {
+    const ts = expense.createdAt || (typeof expense.id === 'string' && expense.id.startsWith('exp-') ? Number(expense.id.replace('exp-', '').split('-')[0]) : Date.now());
+    if (ts && !isNaN(ts) && ts > 1000000000000) {
+      const d = new Date(ts);
+      timeVal = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+  }
+
   const expenseFields = {
     id: { stringValue: String(expense.id) },
     title: { stringValue: String(expense.title || '') },
@@ -415,7 +461,7 @@ export const syncExpenseToFirestore = async (userId, idToken, expense) => {
     category: { stringValue: String(expense.categoryId || expense.category || 'other') },
     categoryId: { stringValue: String(expense.categoryId || expense.category || 'other') },
     date: { stringValue: String(expense.date || '') },
-    time: { stringValue: String(expense.time || '') },
+    time: { stringValue: String(timeVal) },
     paymentMethod: { stringValue: String(expense.paymentMethod || 'cash') },
     notes: { stringValue: String(expense.notes || '') },
     createdAt: { integerValue: String(expense.createdAt || Date.now()) },
@@ -440,11 +486,11 @@ export const syncExpenseToFirestore = async (userId, idToken, expense) => {
   }
 };
 
-// 6. Fetch All Expenses from Firestore Cloud Database
+// 6. Fetch All Expenses from Firestore Cloud Database (pageSize=300 to retrieve complete history)
 export const fetchExpensesFromFirestore = async (userId, idToken = null) => {
   if (!userId || userId === 'guest') return [];
   const cleanUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '_');
-  const collectionPath = `${FIRESTORE_BASE}/users/${cleanUserId}/expenses`;
+  const collectionPath = `${FIRESTORE_BASE}/users/${cleanUserId}/expenses?pageSize=300`;
 
   const headers = {};
   if (idToken) {
@@ -471,6 +517,20 @@ export const fetchExpensesFromFirestore = async (userId, idToken = null) => {
         const num = Number(idVal);
         if (!isNaN(num)) parsedId = num;
       }
+
+      const createdAtVal = f.createdAt?.integerValue ? Number(f.createdAt.integerValue) : (f.createdAt?.doubleValue ? Number(f.createdAt.doubleValue) : 0);
+      let timeVal = f.time?.stringValue || '';
+      if (!timeVal && createdAtVal) {
+        const d = new Date(createdAtVal);
+        timeVal = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      } else if (!timeVal && typeof parsedId === 'string' && parsedId.startsWith('exp-')) {
+        const rawTs = Number(parsedId.replace('exp-', '').split('-')[0]);
+        if (!isNaN(rawTs) && rawTs > 1000000000000) {
+          const d = new Date(rawTs);
+          timeVal = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+      }
+
       return {
         id: parsedId || `exp-${Date.now()}`,
         title: f.title?.stringValue || '',
@@ -478,10 +538,10 @@ export const fetchExpensesFromFirestore = async (userId, idToken = null) => {
         category: f.category?.stringValue || f.categoryId?.stringValue || 'other',
         categoryId: f.categoryId?.stringValue || f.category?.stringValue || 'other',
         date: f.date?.stringValue || new Date().toISOString().split('T')[0],
-        time: f.time?.stringValue || '',
+        time: timeVal,
         paymentMethod: f.paymentMethod?.stringValue || 'cash',
         notes: f.notes?.stringValue || '',
-        createdAt: f.createdAt?.integerValue ? Number(f.createdAt.integerValue) : (f.createdAt?.doubleValue ? Number(f.createdAt.doubleValue) : 0)
+        createdAt: createdAtVal
       };
     }).filter(e => e.title || e.amount > 0);
   } catch (err) {
@@ -537,7 +597,6 @@ export const fetchUserProfileFromFirestore = async (userId, idToken = null) => {
     const f = data.fields || {};
     return {
       dailyBudget: f.dailyBudget?.doubleValue !== undefined ? Number(f.dailyBudget.doubleValue) : (f.dailyBudget?.integerValue !== undefined ? Number(f.dailyBudget.integerValue) : null),
-      budgetUpdatedAt: f.budgetUpdatedAt?.integerValue ? Number(f.budgetUpdatedAt.integerValue) : 0,
       name: f.name?.stringValue || null,
       email: f.email?.stringValue || null
     };

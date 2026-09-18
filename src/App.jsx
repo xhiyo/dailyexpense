@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import './App.css';
 
 import {
@@ -51,6 +51,7 @@ import { formatCurrency } from './utils/storage';
 import {
   syncExpenseToFirestore,
   syncUserProfileToFirestore,
+  syncDailyBudgetToFirestore,
   syncAllLocalUsersToFirestore,
   fetchExpensesFromFirestore,
   deleteExpenseFromFirestore,
@@ -97,11 +98,6 @@ function App() {
   const activeUserId = currentUser?.id || 'guest';
   const loadedUserIdRef = useRef(activeUserId);
 
-  // Budget timestamp helpers — used for last-write-wins sync across devices
-  const budgetTsKey = (uid) => `spendwise_budget_ts_v1_${String(uid).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-  const loadBudgetTs = (uid) => { try { return Number(localStorage.getItem(budgetTsKey(uid))) || 0; } catch { return 0; } };
-  const saveBudgetTs = (uid, ts) => { try { localStorage.setItem(budgetTsKey(uid), String(ts)); } catch {} };
-
   // Auto-sync user profiles on load
   useEffect(() => {
     syncAllLocalUsersToFirestore();
@@ -111,60 +107,138 @@ function App() {
     });
   }, []);
 
-  // On startup: automatic cloud sync — fully transparent, no user action needed
-  const didInitialSyncRef = useRef(false);
-  useEffect(() => {
+  const isSyncingRef = useRef(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState(Date.now());
+
+  // Automatic Real-Time Two-Way Cloud Synchronization Engine
+  const performCloudSync = useCallback(async (isInitial = false) => {
     if (!currentUser?.id || currentUser.id === 'guest') return;
-    if (didInitialSyncRef.current) return;
-    didInitialSyncRef.current = true;
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
+    setIsSyncing(true);
 
     const userId = currentUser.id;
     const idToken = currentUser.idToken || null;
 
-    // --- BUDGET: last-write-wins based on timestamp ---
-    const localBudget = loadDailyBudget(userId);
-    const localBudgetTs = loadBudgetTs(userId);
-
-    fetchUserProfileFromFirestore(userId, idToken).then(profile => {
-      const cloudBudget = profile?.dailyBudget || 0;
-      const cloudTs = profile?.budgetUpdatedAt || 0;
-
-      if (cloudTs > localBudgetTs && cloudBudget > 0) {
-        // Cloud is newer → use cloud budget
-        setDailyBudget(cloudBudget);
-        saveDailyBudget(cloudBudget, userId);
-        saveBudgetTs(userId, cloudTs);
-      } else if (localBudgetTs > cloudTs && localBudget > 0) {
-        // Local is newer → push to cloud
-        syncUserProfileToFirestore(currentUser, { dailyBudget: localBudget, budgetUpdatedAt: localBudgetTs });
-      } else if (cloudBudget > 0 && localBudgetTs === 0) {
-        // First time on this device, no local timestamp → use cloud
-        setDailyBudget(cloudBudget);
-        saveDailyBudget(cloudBudget, userId);
-        saveBudgetTs(userId, cloudTs || Date.now());
+    try {
+      // 1. Fetch user profile & daily budget from Firestore
+      let profile = await fetchUserProfileFromFirestore(userId, idToken);
+      if (!profile && !idToken) {
+        profile = await fetchUserProfileFromFirestore(userId, null);
       }
-    }).catch(err => console.warn('Cloud budget sync error:', err));
 
-    // --- EXPENSES: merge cloud + local (union by ID) ---
-    fetchExpensesFromFirestore(userId, idToken).then(cloudExpenses => {
-      if (cloudExpenses && cloudExpenses.length > 0) {
-        setExpenses(prev => {
-          const map = new Map();
-          prev.forEach(e => map.set(String(e.id), e));
-          cloudExpenses.forEach(e => map.set(String(e.id), e));
-          const merged = Array.from(map.values());
-          saveExpenses(merged, userId);
-          return merged;
+      if (profile && profile.dailyBudget !== null && profile.dailyBudget !== undefined && profile.dailyBudget > 0) {
+        // Cloud has authoritative budget -> sync to local state & storage
+        setDailyBudget(prev => {
+          if (prev !== profile.dailyBudget) {
+            saveDailyBudget(profile.dailyBudget, userId, true);
+            return profile.dailyBudget;
+          }
+          return prev;
         });
+      } else if (isInitial) {
+        // If cloud has no budget yet, seed cloud with local budget
+        const localBudget = loadDailyBudget(userId);
+        if (localBudget > 0) {
+          syncDailyBudgetToFirestore(userId, idToken, localBudget);
+        }
       }
-    }).catch(err => console.warn('Cloud expenses sync error:', err));
 
-    // Push local expenses to cloud (backup)
-    const localExp = loadExpenses(userId);
-    if (localExp.length > 0) {
-      syncAllExpensesToFirestore(userId, idToken, localExp);
+      // 2. Fetch expenses from Firestore (pageSize=300 to retrieve complete dataset)
+      let cloudExpenses = await fetchExpensesFromFirestore(userId, idToken);
+      if ((!cloudExpenses || cloudExpenses.length === 0) && !idToken) {
+        cloudExpenses = await fetchExpensesFromFirestore(userId, null);
+      }
+
+      const localExpenses = loadExpenses(userId);
+
+      if (cloudExpenses && cloudExpenses.length > 0) {
+        const cloudMap = new Map(cloudExpenses.map(e => [String(e.id), e]));
+
+        // Check if there are local expenses created offline or newly added not yet in cloud
+        const unsyncedToCloud = [];
+        localExpenses.forEach(localItem => {
+          const id = String(localItem.id);
+          if (!cloudMap.has(id)) {
+            const created = localItem.createdAt || (id.startsWith('exp-') ? Number(id.replace('exp-', '').split('-')[0]) : 0);
+            const isRecent = created && (Date.now() - created < 180000);
+            if (isRecent || isInitial) {
+              unsyncedToCloud.push(localItem);
+            }
+          }
+        });
+
+        // Push any unsynced local items to cloud
+        if (unsyncedToCloud.length > 0) {
+          for (const item of unsyncedToCloud) {
+            syncExpenseToFirestore(userId, idToken, item);
+          }
+        }
+
+        // Merge: Cloud is authoritative source + any unsynced local items
+        const mergedMap = new Map();
+        cloudExpenses.forEach(e => mergedMap.set(String(e.id), e));
+        unsyncedToCloud.forEach(e => mergedMap.set(String(e.id), e));
+        const mergedList = Array.from(mergedMap.values());
+
+        // Sort newest first
+        mergedList.sort((a, b) => {
+          const timeA = a.createdAt || (typeof a.id === 'string' && a.id.startsWith('exp-') ? Number(a.id.replace('exp-', '').split('-')[0]) : 0);
+          const timeB = b.createdAt || (typeof b.id === 'string' && b.id.startsWith('exp-') ? Number(b.id.replace('exp-', '').split('-')[0]) : 0);
+          return timeB - timeA;
+        });
+
+        saveExpenses(mergedList, userId);
+        setExpenses(mergedList);
+      } else if (isInitial && localExpenses && localExpenses.length > 0) {
+        // Cloud is empty for this user, seed it with local data
+        syncAllExpensesToFirestore(userId, idToken, localExpenses);
+      }
+
+      setLastSyncedAt(Date.now());
+    } catch (err) {
+      console.warn('Auto cloud sync error:', err);
+    } finally {
+      isSyncingRef.current = false;
+      setIsSyncing(false);
     }
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.idToken]);
+
+  // Initial sync on mount and when currentUser changes
+  useEffect(() => {
+    if (currentUser?.id && currentUser.id !== 'guest') {
+      performCloudSync(true);
+    }
+  }, [currentUser?.id, performCloudSync]);
+
+  // Real-time automatic background synchronization:
+  // Runs whenever user switches to the tab/app, unlocks phone screen,
+  // and periodically every 12 seconds in the background.
+  useEffect(() => {
+    if (!currentUser?.id || currentUser.id === 'guest') return;
+
+    const handleSyncTrigger = () => {
+      if (document.visibilityState === 'visible') {
+        performCloudSync(false);
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleSyncTrigger);
+    window.addEventListener('focus', handleSyncTrigger);
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        performCloudSync(false);
+      }
+    }, 12000);
+
+    return () => {
+      window.removeEventListener('visibilitychange', handleSyncTrigger);
+      window.removeEventListener('focus', handleSyncTrigger);
+      clearInterval(interval);
+    };
+  }, [currentUser?.id, performCloudSync]);
 
   // Sync linked accounts when currentUser changes and sync to Firestore
   useEffect(() => {
@@ -347,53 +421,12 @@ function App() {
       setLastViewedTxTime(loadLastViewedTxTime(activeUserId));
       loadedUserIdRef.current = activeUserId;
 
-      // Cloud Sync: If user is authenticated, pull from Firestore Cloud Database
+      // Cloud Sync: If user is authenticated, sync with Firestore Cloud Database
       if (currentUser?.id && activeUserId !== 'guest') {
-        // Try with idToken first, then fallback to unauthenticated (for local-email accounts or expired tokens)
-        const tryFetchExpenses = async () => {
-          let cloudExpenses = await fetchExpensesFromFirestore(activeUserId, currentUser.idToken);
-          // If first attempt returns empty but we have no local data either, try without token
-          // (open Firestore rules may allow read, which helps local-email accounts)
-          if ((!cloudExpenses || cloudExpenses.length === 0) && !currentUser.idToken) {
-            cloudExpenses = await fetchExpensesFromFirestore(activeUserId, null);
-          }
-          return cloudExpenses;
-        };
-
-        tryFetchExpenses().then(cloudExpenses => {
-          if (cloudExpenses && cloudExpenses.length > 0) {
-            setExpenses(prev => {
-              const map = new Map();
-              prev.forEach(e => map.set(String(e.id), e));
-              cloudExpenses.forEach(e => map.set(String(e.id), e));
-              const merged = Array.from(map.values());
-              saveExpenses(merged, activeUserId);
-              return merged;
-            });
-          } else if (localExpenses && localExpenses.length > 0) {
-            // Local expenses exist but cloud is empty: push to Firestore
-            syncAllExpensesToFirestore(activeUserId, currentUser.idToken, localExpenses);
-          }
-          // If both cloud and local are empty, keep current state (don't reset to [])
-        }).catch(err => console.warn('Cloud sync error:', err));
-
-        // Restore cloud budget if exists
-        const tryFetchProfile = async () => {
-          let profile = await fetchUserProfileFromFirestore(activeUserId, currentUser.idToken);
-          if (!profile && !currentUser.idToken) {
-            profile = await fetchUserProfileFromFirestore(activeUserId, null);
-          }
-          return profile;
-        };
-        tryFetchProfile().then(profile => {
-          if (profile?.dailyBudget !== null && profile?.dailyBudget !== undefined && profile.dailyBudget > 0) {
-            setDailyBudget(profile.dailyBudget);
-            saveDailyBudget(profile.dailyBudget, activeUserId);
-          }
-        }).catch(err => console.warn('Cloud profile sync error:', err));
+        performCloudSync(true);
       }
     }
-  }, [activeUserId, currentUser]);
+  }, [activeUserId, currentUser, performCloudSync]);
 
   // When user opens 'transactions' tab, clear unread notifications immediately
   useEffect(() => {
@@ -734,10 +767,8 @@ function App() {
     setDailyBudget(newBudget);
     saveDailyBudget(newBudget, activeUserId, true);
     if (currentUser?.id) {
-      // Save timestamp so other devices know this is the most recent budget
-      const ts = Date.now();
-      saveBudgetTs(activeUserId, ts);
-      syncUserProfileToFirestore(currentUser, { dailyBudget: newBudget, budgetUpdatedAt: ts });
+      syncDailyBudgetToFirestore(currentUser.id, currentUser.idToken, newBudget);
+      syncUserProfileToFirestore(currentUser, { dailyBudget: newBudget });
     }
 
     if (!currentUser) {
@@ -842,224 +873,223 @@ function App() {
     showToast(t('toasts.dataCleared'), 'info');
   };
 
-  // Manual cloud backup: push all local expenses + profile to Firestore
+  // Force cloud sync helper
   const handleSyncToCloud = async () => {
     if (!currentUser?.id || currentUser.id === 'guest') {
       showToast(language === 'en' ? 'Please log in to sync.' : 'Silakan login terlebih dahulu.', 'warning');
       return;
     }
-    await syncAllExpensesToFirestore(currentUser.id, currentUser.idToken, expenses);
-    await syncUserProfileToFirestore(currentUser, { dailyBudget });
-    showToast(language === 'en' ? `${expenses.length} expenses backed up to cloud!` : `${expenses.length} transaksi berhasil di-backup ke cloud!`);
+    await performCloudSync(true);
+    showToast(language === 'en' ? 'Data synchronized with cloud!' : 'Data berhasil disinkronkan dengan cloud!');
   };
 
   return (
     <>
       <div className="app-layout">
         {/* Left Navigation Sidebar */}
-          <Sidebar
+        <Sidebar
+          activeTab={activeTab}
+          onSelectTab={navigateTo}
+          onOpenExpenseModal={handleOpenAddExpense}
+          onOpenCategoryModal={handleOpenCategories}
+          onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+          dailyBudget={dailyBudget}
+          currency={currency}
+          onExportCSV={handleExportCSV}
+          currentUser={currentUser}
+          onOpenAuthModal={handleOpenLogin}
+          onLogout={handleLogout}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          unreadTransactionsCount={unreadTransactionsCount}
+          linkedAccounts={linkedAccounts}
+          onSwitchAccount={handleSwitchAccount}
+          onOpenAddAccount={handleOpenAddAccount}
+          onRemoveLinkedAccount={handleRequestUnlink}
+        />
+
+        {/* Main Content Viewport */}
+        <div className="app-main-viewport">
+          {/* Topbar Header */}
+          <Header
+            onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
+            onOpenMenu={() => setIsMobileMenuOpen(true)}
             activeTab={activeTab}
-            onSelectTab={navigateTo}
-            onOpenExpenseModal={handleOpenAddExpense}
-            onOpenCategoryModal={handleOpenCategories}
-            onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
-            dailyBudget={dailyBudget}
+            totalSpendToday={totalSpendToday}
             currency={currency}
-            onExportCSV={handleExportCSV}
             currentUser={currentUser}
-            onOpenAuthModal={handleOpenLogin}
-            onLogout={handleLogout}
-            isOpen={isSidebarOpen}
-            onClose={() => setIsSidebarOpen(false)}
-            unreadTransactionsCount={unreadTransactionsCount}
-            linkedAccounts={linkedAccounts}
-            onSwitchAccount={handleSwitchAccount}
-            onOpenAddAccount={handleOpenAddAccount}
-            onRemoveLinkedAccount={handleRequestUnlink}
-          />
-
-          {/* Main Content Viewport */}
-          <div className="app-main-viewport">
-            {/* Topbar Header */}
-            <Header
-              onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
-              onOpenMenu={() => setIsMobileMenuOpen(true)}
-              activeTab={activeTab}
-              totalSpendToday={totalSpendToday}
-              currency={currency}
-              currentUser={currentUser}
-              onOpenProfile={() => {
-                if (!currentUser) {
-                  handleOpenLogin();
-                  return;
-                }
-                navigateTo('profile');
-              }}
-              onOpenAuthModal={handleOpenLogin}
-              theme={theme}
-              toggleTheme={toggleTheme}
-            />
-
-        {/* Main Website Content Body */}
-        <main className="main-content">
-        {/* TAB 1: RINGKASAN (DASHBOARD) */}
-        {activeTab === 'dashboard' && (
-          <div className="tab-dashboard-view">
-            {/* 1. Hero Summary Cards (Pengeluaran Hari Ini & Batas Limit) */}
-            <DailySummaryCards
-              expenses={expenses}
-              selectedDate={selectedDate}
-              dailyBudget={dailyBudget}
-              currency={currency}
-              categories={categories}
-              onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
-            />
-
-            {/* 2. Navigasi Tanggal Modern */}
-            <DateNavigator
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              expenses={expenses}
-              currency={currency}
-            />
-
-            {/* 3. Daftar Transaksi Hari Terpilih */}
-            <ExpenseList
-              expenses={expenses}
-              selectedDate={selectedDate}
-              currency={currency}
-              categories={categories}
-              currentUser={currentUser}
-              onEditExpense={(item) => {
-                if (!currentUser) {
-                  showToast('Silakan buat akun atau masuk terlebih dahulu.', 'warning');
-                  handleOpenLogin();
-                  return;
-                }
-                setExpenseToEdit(item);
-                setIsExpenseModalOpen(true);
-              }}
-              onDeleteExpense={handleDeleteExpense}
-              onQuickAddPreset={handleQuickAddPreset}
-              onOpenAddModal={handleOpenAddExpense}
-            />
-
-            {/* 4. Grafik Tren & Kategori */}
-            <ChartsSection
-              expenses={expenses}
-              selectedDate={selectedDate}
-              dailyBudget={dailyBudget}
-              currency={currency}
-              categories={categories}
-              onSelectDate={setSelectedDate}
-            />
-          </div>
-        )}
-
-        {/* TAB 2: TRANSACTIONS HISTORY */}
-        {activeTab === 'transactions' && (
-          <div className="tab-transactions-view">
-            <ExpenseList
-              expenses={expenses}
-              selectedDate={selectedDate}
-              currency={currency}
-              categories={categories}
-              currentUser={currentUser}
-              onEditExpense={(item) => {
-                if (!currentUser) {
-                  showToast('Silakan buat akun atau masuk terlebih dahulu.', 'warning');
-                  handleOpenLogin();
-                  return;
-                }
-                setExpenseToEdit(item);
-                setIsExpenseModalOpen(true);
-              }}
-              onDeleteExpense={handleDeleteExpense}
-              onQuickAddPreset={handleQuickAddPreset}
-              onOpenAddModal={handleOpenAddExpense}
-              showAllDates={true}
-            />
-          </div>
-        )}
-
-        {/* TAB 3: SETTINGS & PREFERENCES */}
-        {activeTab === 'settings' && (
-          <SettingsPage
-            theme={theme}
-            toggleTheme={toggleTheme}
-            accentColor={accentColor}
-            onUpdateAccentColor={handleUpdateAccentColor}
-            currency={currency}
-            onUpdateCurrency={handleUpdateCurrency}
-            dailyBudget={dailyBudget}
-            onUpdateDailyBudget={handleUpdateDailyBudget}
-            onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
-            onExportCSV={handleExportCSV}
-            currentUser={currentUser}
-            onOpenAuthModal={handleOpenLogin}
-            onLogout={handleLogout}
-            onResetData={handleResetData}
-            onSyncToCloud={currentUser ? handleSyncToCloud : undefined}
-            onBackToDashboard={() => navigateTo('dashboard')}
-            onOpenCookieSettings={() => setIsCookieBannerOpen(true)}
-          />
-        )}
-
-        {/* TAB 4: DEDICATED PROFILE PAGE */}
-        {activeTab === 'profile' && (
-          <ProfilePage
-            currentUser={currentUser}
-            onLogin={handleLogin}
-            onUpdateProfile={(updatedUser) => {
-              if (
-                currentUser?.provider === 'google' ||
-                currentUser?.role === 'Google Account' ||
-                String(currentUser?.id || '').startsWith('google-') ||
-                (typeof currentUser?.avatar === 'string' && currentUser.avatar.includes('googleusercontent.com'))
-              ) {
+            onOpenProfile={() => {
+              if (!currentUser) {
+                handleOpenLogin();
                 return;
               }
-              setCurrentUser(updatedUser);
-              saveCurrentUser(updatedUser);
-              setLinkedAccounts(loadLinkedAccounts());
-              syncUserProfileToFirestore(updatedUser, { dailyBudget });
-              showToast('Profil berhasil diperbarui!');
+              navigateTo('profile');
             }}
-            expenses={expenses}
-            currency={currency}
-            onUpdateCurrency={handleUpdateCurrency}
-            dailyBudget={dailyBudget}
-            onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+            onOpenAuthModal={handleOpenLogin}
             theme={theme}
             toggleTheme={toggleTheme}
-            categories={categories}
-            onOpenCategoryModal={handleOpenCategories}
-            onExportCSV={handleExportCSV}
-            onLogout={handleLogout}
-            onOpenAuthModal={handleOpenLogin}
-            onBackToDashboard={() => navigateTo('dashboard')}
-            linkedAccounts={linkedAccounts}
-            onSwitchAccount={handleSwitchAccount}
-            onOpenAddAccount={handleOpenAddAccount}
-            onRemoveLinkedAccount={handleRequestUnlink}
-            onOpenCookieSettings={() => setIsCookieBannerOpen(true)}
           />
-        )}
 
-        {/* TAB 5: DEDICATED CATEGORIES MANAGEMENT PAGE */}
-        {activeTab === 'categories' && (
-          <CategoriesPage
-            categories={categories}
-            currentUser={currentUser}
-            onSaveCategories={handleSaveCategories}
-            onResetCategories={handleResetCategories}
-            expenses={expenses}
-            onBackToDashboard={() => navigateTo('dashboard')}
-          />
-        )}
-      </main>
+          {/* Main Website Content Body */}
+          <main className="main-content">
+            {/* TAB 1: RINGKASAN (DASHBOARD) */}
+            {activeTab === 'dashboard' && (
+              <div className="tab-dashboard-view">
+                {/* 1. Hero Summary Cards (Pengeluaran Hari Ini & Batas Limit) */}
+                <DailySummaryCards
+                  expenses={expenses}
+                  selectedDate={selectedDate}
+                  dailyBudget={dailyBudget}
+                  currency={currency}
+                  categories={categories}
+                  onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+                />
+
+                {/* 2. Navigasi Tanggal Modern */}
+                <DateNavigator
+                  selectedDate={selectedDate}
+                  onSelectDate={setSelectedDate}
+                  expenses={expenses}
+                  currency={currency}
+                />
+
+                {/* 3. Daftar Transaksi Hari Terpilih */}
+                <ExpenseList
+                  expenses={expenses}
+                  selectedDate={selectedDate}
+                  currency={currency}
+                  categories={categories}
+                  currentUser={currentUser}
+                  onEditExpense={(item) => {
+                    if (!currentUser) {
+                      showToast('Silakan buat akun atau masuk terlebih dahulu.', 'warning');
+                      handleOpenLogin();
+                      return;
+                    }
+                    setExpenseToEdit(item);
+                    setIsExpenseModalOpen(true);
+                  }}
+                  onDeleteExpense={handleDeleteExpense}
+                  onQuickAddPreset={handleQuickAddPreset}
+                  onOpenAddModal={handleOpenAddExpense}
+                />
+
+                {/* 4. Grafik Tren & Kategori */}
+                <ChartsSection
+                  expenses={expenses}
+                  selectedDate={selectedDate}
+                  dailyBudget={dailyBudget}
+                  currency={currency}
+                  categories={categories}
+                  onSelectDate={setSelectedDate}
+                />
+              </div>
+            )}
+
+            {/* TAB 2: TRANSACTIONS HISTORY */}
+            {activeTab === 'transactions' && (
+              <div className="tab-transactions-view">
+                <ExpenseList
+                  expenses={expenses}
+                  selectedDate={selectedDate}
+                  currency={currency}
+                  categories={categories}
+                  currentUser={currentUser}
+                  onEditExpense={(item) => {
+                    if (!currentUser) {
+                      showToast('Silakan buat akun atau masuk terlebih dahulu.', 'warning');
+                      handleOpenLogin();
+                      return;
+                    }
+                    setExpenseToEdit(item);
+                    setIsExpenseModalOpen(true);
+                  }}
+                  onDeleteExpense={handleDeleteExpense}
+                  onQuickAddPreset={handleQuickAddPreset}
+                  onOpenAddModal={handleOpenAddExpense}
+                  showAllDates={true}
+                />
+              </div>
+            )}
+
+            {/* TAB 3: SETTINGS & PREFERENCES */}
+            {activeTab === 'settings' && (
+              <SettingsPage
+                theme={theme}
+                toggleTheme={toggleTheme}
+                accentColor={accentColor}
+                onUpdateAccentColor={handleUpdateAccentColor}
+                currency={currency}
+                onUpdateCurrency={handleUpdateCurrency}
+                dailyBudget={dailyBudget}
+                onUpdateDailyBudget={handleUpdateDailyBudget}
+                onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+                onExportCSV={handleExportCSV}
+                currentUser={currentUser}
+                onOpenAuthModal={handleOpenLogin}
+                onLogout={handleLogout}
+                onResetData={handleResetData}
+                onSyncToCloud={currentUser ? handleSyncToCloud : undefined}
+                onBackToDashboard={() => navigateTo('dashboard')}
+                onOpenCookieSettings={() => setIsCookieBannerOpen(true)}
+              />
+            )}
+
+            {/* TAB 4: DEDICATED PROFILE PAGE */}
+            {activeTab === 'profile' && (
+              <ProfilePage
+                currentUser={currentUser}
+                onLogin={handleLogin}
+                onUpdateProfile={(updatedUser) => {
+                  if (
+                    currentUser?.provider === 'google' ||
+                    currentUser?.role === 'Google Account' ||
+                    String(currentUser?.id || '').startsWith('google-') ||
+                    (typeof currentUser?.avatar === 'string' && currentUser.avatar.includes('googleusercontent.com'))
+                  ) {
+                    return;
+                  }
+                  setCurrentUser(updatedUser);
+                  saveCurrentUser(updatedUser);
+                  setLinkedAccounts(loadLinkedAccounts());
+                  syncUserProfileToFirestore(updatedUser, { dailyBudget });
+                  showToast('Profil berhasil diperbarui!');
+                }}
+                expenses={expenses}
+                currency={currency}
+                onUpdateCurrency={handleUpdateCurrency}
+                dailyBudget={dailyBudget}
+                onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
+                theme={theme}
+                toggleTheme={toggleTheme}
+                categories={categories}
+                onOpenCategoryModal={handleOpenCategories}
+                onExportCSV={handleExportCSV}
+                onLogout={handleLogout}
+                onOpenAuthModal={handleOpenLogin}
+                onBackToDashboard={() => navigateTo('dashboard')}
+                linkedAccounts={linkedAccounts}
+                onSwitchAccount={handleSwitchAccount}
+                onOpenAddAccount={handleOpenAddAccount}
+                onRemoveLinkedAccount={handleRequestUnlink}
+                onOpenCookieSettings={() => setIsCookieBannerOpen(true)}
+              />
+            )}
+
+            {/* TAB 5: DEDICATED CATEGORIES MANAGEMENT PAGE */}
+            {activeTab === 'categories' && (
+              <CategoriesPage
+                categories={categories}
+                currentUser={currentUser}
+                onSaveCategories={handleSaveCategories}
+                onResetCategories={handleResetCategories}
+                expenses={expenses}
+                onBackToDashboard={() => navigateTo('dashboard')}
+              />
+            )}
+          </main>
+        </div>
       </div>
-    </div>
 
       {/* Mobile Bottom Navigation Bar (Visible only on mobile <= 768px) */}
       <MobileBottomNav
