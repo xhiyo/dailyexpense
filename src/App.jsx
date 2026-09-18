@@ -97,50 +97,54 @@ function App() {
   const activeUserId = currentUser?.id || 'guest';
   const loadedUserIdRef = useRef(activeUserId);
 
-  // Auto-sync all accounts on this device (including previously created ones) to Firestore
+  // Auto-sync user profiles on load
   useEffect(() => {
     syncAllLocalUsersToFirestore();
     const storedLinked = loadLinkedAccounts();
     storedLinked.forEach(acc => {
-      if (acc && acc.id) {
-        syncUserProfileToFirestore(acc);
-      }
+      if (acc && acc.id) syncUserProfileToFirestore(acc);
     });
-
-    // On app start: if user is already logged in, push all local expenses to cloud
-    // AND pull from cloud to merge any data entered on other devices.
-    const initialUser = loadCurrentUser();
-    if (initialUser?.id && initialUser.id !== 'guest') {
-      const localExp = loadExpenses(initialUser.id);
-
-      // Push local → cloud (upload data that may never have been synced)
-      if (localExp.length > 0) {
-        syncAllExpensesToFirestore(initialUser.id, initialUser.idToken, localExp);
-      }
-
-      // Pull cloud → local (download data from other devices)
-      fetchExpensesFromFirestore(initialUser.id, initialUser.idToken).then(cloudExpenses => {
-        if (cloudExpenses && cloudExpenses.length > 0) {
-          setExpenses(prev => {
-            const map = new Map();
-            prev.forEach(e => map.set(String(e.id), e));
-            cloudExpenses.forEach(e => map.set(String(e.id), e));
-            const merged = Array.from(map.values());
-            saveExpenses(merged, initialUser.id);
-            return merged;
-          });
-        }
-      }).catch(err => console.warn('Initial cloud pull error:', err));
-
-      // Also pull daily budget from cloud profile
-      fetchUserProfileFromFirestore(initialUser.id, initialUser.idToken).then(profile => {
-        if (profile?.dailyBudget !== null && profile?.dailyBudget !== undefined && profile.dailyBudget > 0) {
-          setDailyBudget(profile.dailyBudget);
-          saveDailyBudget(profile.dailyBudget, initialUser.id);
-        }
-      }).catch(err => console.warn('Initial cloud profile pull error:', err));
-    }
   }, []);
+
+  // On startup: two-way cloud sync whenever we have a logged-in user
+  const didInitialSyncRef = useRef(false);
+  useEffect(() => {
+    if (!currentUser?.id || currentUser.id === 'guest') return;
+    if (didInitialSyncRef.current) return; // only run once per session
+    didInitialSyncRef.current = true;
+
+    const userId = currentUser.id;
+    const idToken = currentUser.idToken || null;
+    const localExp = loadExpenses(userId);
+
+    // Push local → cloud (backup everything on this device)
+    if (localExp.length > 0) {
+      syncAllExpensesToFirestore(userId, idToken, localExp);
+      syncUserProfileToFirestore(currentUser, { dailyBudget });
+    }
+
+    // Pull cloud → local (get data from other devices)
+    fetchExpensesFromFirestore(userId, idToken).then(cloudExpenses => {
+      if (cloudExpenses && cloudExpenses.length > 0) {
+        setExpenses(prev => {
+          const map = new Map();
+          prev.forEach(e => map.set(String(e.id), e));
+          cloudExpenses.forEach(e => map.set(String(e.id), e));
+          const merged = Array.from(map.values());
+          saveExpenses(merged, userId);
+          return merged;
+        });
+      }
+    }).catch(err => console.warn('Cloud pull expenses error:', err));
+
+    // Pull daily budget from cloud profile
+    fetchUserProfileFromFirestore(userId, idToken).then(profile => {
+      if (profile?.dailyBudget > 0) {
+        setDailyBudget(profile.dailyBudget);
+        saveDailyBudget(profile.dailyBudget, userId);
+      }
+    }).catch(err => console.warn('Cloud pull profile error:', err));
+  }, [currentUser?.id]);
 
   // Sync linked accounts when currentUser changes and sync to Firestore
   useEffect(() => {
