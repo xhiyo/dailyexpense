@@ -12,11 +12,13 @@ import {
   UserPlus,
   Check,
   ChevronRight,
-  Globe
+  Globe,
+  Smartphone
 } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 import { formatCurrency } from '../utils/storage';
 import { useTranslation } from '../i18n/LanguageContext';
+import { triggerInstallPrompt, isStandalone } from '../utils/pwa';
 
 export const MobileMenuSheet = ({
   isOpen,
@@ -33,11 +35,25 @@ export const MobileMenuSheet = ({
   dailyBudget = 0,
   currency = 'Rp',
   onOpenBudgetModal,
-  onExportCSV
+  onExportCSV,
+  onOpenInstallGuide
 }) => {
   const { t, language, setLanguage } = useTranslation();
 
   if (!isOpen) return null;
+
+  const handleInstallApp = async () => {
+    if (isStandalone()) {
+      alert(language === 'en' ? 'SpendWise is already installed on your device!' : 'SpendWise sudah terpasang di perangkat Anda!');
+      onClose();
+      return;
+    }
+    const res = await triggerInstallPrompt();
+    if (res.outcome === 'manual_required') {
+      if (onOpenInstallGuide) onOpenInstallGuide();
+    }
+    onClose();
+  };
 
   const handleNavigate = (tab) => {
     onSelectTab(tab);
@@ -242,6 +258,26 @@ export const MobileMenuSheet = ({
                 <span className="mobile-tile-label">{t('nav.exportExcel')}</span>
                 <span className="mobile-tile-sub">
                   {language === 'en' ? 'Download .xlsx report' : 'Unduh laporan .xlsx'}
+                </span>
+              </div>
+              <ChevronRight size={16} className="mobile-tile-arrow" />
+            </button>
+
+            {/* Pasang Aplikasi Mobile (PWA) */}
+            <button
+              type="button"
+              className="mobile-tile-btn"
+              onClick={handleInstallApp}
+            >
+              <div className="mobile-tile-icon-box tile-blue">
+                <Smartphone size={18} />
+              </div>
+              <div className="mobile-tile-content">
+                <span className="mobile-tile-label">
+                  {language === 'en' ? 'Install App' : 'Pasang Aplikasi'}
+                </span>
+                <span className="mobile-tile-sub">
+                  {language === 'en' ? 'Add to Home Screen' : 'Tambahkan ke Layar Utama'}
                 </span>
               </div>
               <ChevronRight size={16} className="mobile-tile-arrow" />

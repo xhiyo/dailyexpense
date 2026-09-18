@@ -45,6 +45,7 @@ import { SettingsPage } from './components/SettingsPage';
 import { ExportModal } from './components/ExportModal';
 import { UnlinkAccountModal } from './components/UnlinkAccountModal';
 import { CookieConsentBanner } from './components/CookieConsentBanner';
+import { InstallPromptModal } from './components/InstallPromptModal';
 import { Toast } from './components/Toast';
 import { formatCurrency } from './utils/storage';
 import { syncExpenseToFirestore, syncUserProfileToFirestore, syncAllLocalUsersToFirestore } from './utils/firebase';
@@ -176,6 +177,7 @@ function App() {
   const [isAuthRegisterMode, setIsAuthRegisterMode] = useState(false);
   const [isLinkingAccount, setIsLinkingAccount] = useState(false);
   const [isCookieBannerOpen, setIsCookieBannerOpen] = useState(false);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
 
   const handleOpenLogin = () => {
     setIsLinkingAccount(false);
@@ -926,6 +928,7 @@ function App() {
         currency={currency}
         onOpenBudgetModal={() => setIsBudgetModalOpen(true)}
         onExportCSV={handleExportCSV}
+        onOpenInstallGuide={() => setIsInstallGuideOpen(true)}
       />
 
       {/* Formulir Catat / Ubah Pengeluaran */}
@@ -1001,6 +1004,12 @@ function App() {
       <CookieConsentBanner
         forceOpen={isCookieBannerOpen}
         onClose={() => setIsCookieBannerOpen(false)}
+      />
+
+      {/* Mobile PWA Install Guide Modal (Khusus Mobile) */}
+      <InstallPromptModal
+        isOpen={isInstallGuideOpen}
+        onClose={() => setIsInstallGuideOpen(false)}
       />
     </>
   );

@@ -7826,11 +7826,136 @@ select.expense-input {
   .cookie-standard-actions {
     justify-content: flex-end;
     gap: 10px;
+    .cookie-btn-decline,
+    .cookie-btn-accept {
+      flex: 1;
+      text-align: center;
+      padding: 11px 16px;
+    }
   }
-  .cookie-btn-decline,
-  .cookie-btn-accept {
-    flex: 1;
-    text-align: center;
-    padding: 11px 16px;
+}
+
+/* ==========================================================================
+   Mobile PWA Install Guide Modal (Mobile Only)
+   ========================================================================== */
+.install-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+
+@media (min-width: 600px) {
+  .install-modal-overlay {
+    align-items: center;
   }
+}
+
+.install-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-xl, 20px);
+  padding: 22px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.install-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.install-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.install-modal-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.install-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 2px 0;
+}
+
+.install-modal-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.install-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.install-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.install-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 12px);
+}
+
+.install-step-item.is-highlight {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.install-step-icon {
+  margin-top: 2px;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.install-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.install-step-text strong {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.install-step-text span {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
 }
