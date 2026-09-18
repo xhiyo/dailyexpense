@@ -176,9 +176,21 @@ function App() {
           }
         }
 
-        // Merge: Cloud is authoritative source + any unsynced local items
+        // Merge: Cloud is authoritative source, but preserve any local item's time/notes if cloud was empty
         const mergedMap = new Map();
-        cloudExpenses.forEach(e => mergedMap.set(String(e.id), e));
+        localExpenses.forEach(localItem => mergedMap.set(String(localItem.id), localItem));
+        cloudExpenses.forEach(cloudItem => {
+          const existingLocal = mergedMap.get(String(cloudItem.id));
+          if (existingLocal) {
+            mergedMap.set(String(cloudItem.id), {
+              ...existingLocal,
+              ...cloudItem,
+              time: cloudItem.time || existingLocal.time || ''
+            });
+          } else {
+            mergedMap.set(String(cloudItem.id), cloudItem);
+          }
+        });
         unsyncedToCloud.forEach(e => mergedMap.set(String(e.id), e));
         const mergedList = Array.from(mergedMap.values());
 

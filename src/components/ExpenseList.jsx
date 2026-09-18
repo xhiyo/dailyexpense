@@ -49,7 +49,13 @@ export const ExpenseList = ({
   };
 
   const getExpenseDisplayTime = (item) => {
-    return getTimeString(item);
+    if (item.time && item.time.trim() !== '') return item.time;
+    const ts = getCreatedTimestamp(item);
+    if (ts && ts > 1000000000000) {
+      const d = new Date(ts);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+    return '--:--';
   };
 
   // Filter & sort expenses
