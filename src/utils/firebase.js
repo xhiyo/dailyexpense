@@ -405,41 +405,31 @@ export const syncExpenseToFirestore = async (userId, idToken, expense) => {
     headers['Authorization'] = `Bearer ${idToken}`;
   }
 
+  const expenseFields = {
+    id: { stringValue: String(expense.id) },
+    title: { stringValue: String(expense.title || '') },
+    amount: { doubleValue: Number(expense.amount || 0) },
+    category: { stringValue: String(expense.categoryId || expense.category || 'other') },
+    categoryId: { stringValue: String(expense.categoryId || expense.category || 'other') },
+    date: { stringValue: String(expense.date || '') },
+    time: { stringValue: String(expense.time || '') },
+    paymentMethod: { stringValue: String(expense.paymentMethod || 'cash') },
+    notes: { stringValue: String(expense.notes || '') },
+    createdAt: { integerValue: String(expense.createdAt || Date.now()) },
+    updatedAt: { stringValue: new Date().toISOString() }
+  };
+
   try {
     let res = await fetch(docPath, {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({
-        fields: {
-          id: { stringValue: String(expense.id) },
-          title: { stringValue: String(expense.title || '') },
-          amount: { doubleValue: Number(expense.amount || 0) },
-          category: { stringValue: String(expense.categoryId || expense.category || 'other') },
-          categoryId: { stringValue: String(expense.categoryId || expense.category || 'other') },
-          date: { stringValue: String(expense.date || '') },
-          paymentMethod: { stringValue: String(expense.paymentMethod || 'cash') },
-          notes: { stringValue: String(expense.notes || '') },
-          updatedAt: { stringValue: new Date().toISOString() }
-        }
-      })
+      body: JSON.stringify({ fields: expenseFields })
     });
     if (!res.ok && headers['Authorization']) {
       await fetch(docPath, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fields: {
-            id: { stringValue: String(expense.id) },
-            title: { stringValue: String(expense.title || '') },
-            amount: { doubleValue: Number(expense.amount || 0) },
-            category: { stringValue: String(expense.categoryId || expense.category || 'other') },
-            categoryId: { stringValue: String(expense.categoryId || expense.category || 'other') },
-            date: { stringValue: String(expense.date || '') },
-            paymentMethod: { stringValue: String(expense.paymentMethod || 'cash') },
-            notes: { stringValue: String(expense.notes || '') },
-            updatedAt: { stringValue: new Date().toISOString() }
-          }
-        })
+        body: JSON.stringify({ fields: expenseFields })
       });
     }
   } catch (err) {
@@ -485,8 +475,10 @@ export const fetchExpensesFromFirestore = async (userId, idToken = null) => {
         category: f.category?.stringValue || f.categoryId?.stringValue || 'other',
         categoryId: f.categoryId?.stringValue || f.category?.stringValue || 'other',
         date: f.date?.stringValue || new Date().toISOString().split('T')[0],
+        time: f.time?.stringValue || '',
         paymentMethod: f.paymentMethod?.stringValue || 'cash',
-        notes: f.notes?.stringValue || ''
+        notes: f.notes?.stringValue || '',
+        createdAt: f.createdAt?.integerValue ? Number(f.createdAt.integerValue) : (f.createdAt?.doubleValue ? Number(f.createdAt.doubleValue) : 0)
       };
     }).filter(e => e.title || e.amount > 0);
   } catch (err) {
