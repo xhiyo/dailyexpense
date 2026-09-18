@@ -240,8 +240,8 @@ export const ChartsSection = ({
         <div className="modern-bar-chart-container">
           <div className={`modern-bar-chart ${isDense ? 'is-dense' : ''}`}>
             {trendData.days.map((item) => {
-              const heightPct = trendData.maxVal > 0 
-                ? Math.max(Math.min((item.total / trendData.maxVal) * 75, 75), item.total > 0 ? 8 : 0) 
+              const heightPct = trendData.maxVal > 0
+                ? Math.max(Math.min((item.total / trendData.maxVal) * 75, 75), item.total > 0 ? 8 : 0)
                 : 0;
               return (
                 <div
