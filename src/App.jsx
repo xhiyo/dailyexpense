@@ -118,9 +118,10 @@ function App() {
     const localExp = loadExpenses(userId);
 
     // Push local → cloud (backup everything on this device)
+    // Always sync profile/budget, regardless of whether expenses exist
+    syncUserProfileToFirestore(currentUser, { dailyBudget });
     if (localExp.length > 0) {
       syncAllExpensesToFirestore(userId, idToken, localExp);
-      syncUserProfileToFirestore(currentUser, { dailyBudget });
     }
 
     // Pull cloud → local (get data from other devices)
