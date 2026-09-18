@@ -131,6 +131,14 @@ function App() {
           });
         }
       }).catch(err => console.warn('Initial cloud pull error:', err));
+
+      // Also pull daily budget from cloud profile
+      fetchUserProfileFromFirestore(initialUser.id, initialUser.idToken).then(profile => {
+        if (profile?.dailyBudget !== null && profile?.dailyBudget !== undefined && profile.dailyBudget > 0) {
+          setDailyBudget(profile.dailyBudget);
+          saveDailyBudget(profile.dailyBudget, initialUser.id);
+        }
+      }).catch(err => console.warn('Initial cloud profile pull error:', err));
     }
   }, []);
 
