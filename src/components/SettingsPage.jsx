@@ -504,7 +504,7 @@ export const SettingsPage = ({
               <h4 className="settings-card-title">☁️ {language === 'en' ? 'Cloud Backup & Sync' : 'Backup & Sinkronisasi Cloud'}</h4>
               <p className="settings-card-subtitle">
                 {language === 'en'
-                  ? 'Push all local data to Firestore Cloud so it's accessible from any device.'
+                  ? "Push all local data to Firestore Cloud so it's accessible from any device."
                   : 'Push semua data lokal ke Firestore Cloud agar bisa diakses dari perangkat lain.'}
               </p>
             </div>
