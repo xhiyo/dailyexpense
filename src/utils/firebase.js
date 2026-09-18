@@ -406,23 +406,148 @@ export const syncExpenseToFirestore = async (userId, idToken, expense) => {
   }
 
   try {
-    await fetch(docPath, {
+    let res = await fetch(docPath, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({
         fields: {
-          id: { integerValue: String(expense.id) },
+          id: { stringValue: String(expense.id) },
           title: { stringValue: String(expense.title || '') },
           amount: { doubleValue: Number(expense.amount || 0) },
           category: { stringValue: String(expense.categoryId || expense.category || 'other') },
+          categoryId: { stringValue: String(expense.categoryId || expense.category || 'other') },
           date: { stringValue: String(expense.date || '') },
           paymentMethod: { stringValue: String(expense.paymentMethod || 'cash') },
-          notes: { stringValue: String(expense.notes || '') }
+          notes: { stringValue: String(expense.notes || '') },
+          updatedAt: { stringValue: new Date().toISOString() }
         }
       })
     });
+    if (!res.ok && headers['Authorization']) {
+      await fetch(docPath, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            id: { stringValue: String(expense.id) },
+            title: { stringValue: String(expense.title || '') },
+            amount: { doubleValue: Number(expense.amount || 0) },
+            category: { stringValue: String(expense.categoryId || expense.category || 'other') },
+            categoryId: { stringValue: String(expense.categoryId || expense.category || 'other') },
+            date: { stringValue: String(expense.date || '') },
+            paymentMethod: { stringValue: String(expense.paymentMethod || 'cash') },
+            notes: { stringValue: String(expense.notes || '') },
+            updatedAt: { stringValue: new Date().toISOString() }
+          }
+        })
+      });
+    }
   } catch (err) {
     console.warn('Firestore sync error:', err);
+  }
+};
+
+// 6. Fetch All Expenses from Firestore Cloud Database
+export const fetchExpensesFromFirestore = async (userId, idToken = null) => {
+  if (!userId || userId === 'guest') return [];
+  const cleanUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const collectionPath = `${FIRESTORE_BASE}/users/${cleanUserId}/expenses`;
+
+  const headers = {};
+  if (idToken) {
+    headers['Authorization'] = `Bearer ${idToken}`;
+  }
+
+  try {
+    let res = await fetch(collectionPath, { method: 'GET', headers });
+    if (!res.ok && headers['Authorization']) {
+      res = await fetch(collectionPath, { method: 'GET' });
+    }
+    if (!res.ok) {
+      return [];
+    }
+    const data = await res.json();
+    if (!data.documents || !Array.isArray(data.documents)) {
+      return [];
+    }
+    return data.documents.map(doc => {
+      const f = doc.fields || {};
+      const idVal = f.id?.stringValue || (f.id?.integerValue ? String(f.id.integerValue) : null);
+      let parsedId = idVal;
+      if (idVal && !idVal.startsWith('exp-')) {
+        const num = Number(idVal);
+        if (!isNaN(num)) parsedId = num;
+      }
+      return {
+        id: parsedId || `exp-${Date.now()}`,
+        title: f.title?.stringValue || '',
+        amount: f.amount?.doubleValue !== undefined ? Number(f.amount.doubleValue) : (f.amount?.integerValue !== undefined ? Number(f.amount.integerValue) : 0),
+        category: f.category?.stringValue || f.categoryId?.stringValue || 'other',
+        categoryId: f.categoryId?.stringValue || f.category?.stringValue || 'other',
+        date: f.date?.stringValue || new Date().toISOString().split('T')[0],
+        paymentMethod: f.paymentMethod?.stringValue || 'cash',
+        notes: f.notes?.stringValue || ''
+      };
+    }).filter(e => e.title || e.amount > 0);
+  } catch (err) {
+    console.warn('Firestore fetch expenses error:', err);
+    return [];
+  }
+};
+
+// 7. Delete Expense from Firestore Cloud Database
+export const deleteExpenseFromFirestore = async (userId, idToken, expenseId) => {
+  if (!userId || !expenseId || userId === 'guest') return;
+  const cleanUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const cleanExpId = String(expenseId).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const docPath = `${FIRESTORE_BASE}/users/${cleanUserId}/expenses/${cleanExpId}`;
+
+  const headers = {};
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
+  try {
+    let res = await fetch(docPath, { method: 'DELETE', headers });
+    if (!res.ok && headers['Authorization']) {
+      await fetch(docPath, { method: 'DELETE' });
+    }
+  } catch (err) {
+    console.warn('Firestore delete expense error:', err);
+  }
+};
+
+// 8. Batch Sync All Expenses to Firestore Cloud Database
+export const syncAllExpensesToFirestore = async (userId, idToken, expensesList) => {
+  if (!userId || userId === 'guest' || !Array.isArray(expensesList) || expensesList.length === 0) return;
+  for (const exp of expensesList) {
+    await syncExpenseToFirestore(userId, idToken, exp);
+  }
+};
+
+// 9. Fetch User Profile & Budget from Firestore Cloud Database
+export const fetchUserProfileFromFirestore = async (userId, idToken = null) => {
+  if (!userId || userId === 'guest') return null;
+  const cleanUserId = String(userId).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const docPath = `${FIRESTORE_BASE}/users/${cleanUserId}`;
+
+  const headers = {};
+  if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
+  try {
+    let res = await fetch(docPath, { method: 'GET', headers });
+    if (!res.ok && headers['Authorization']) {
+      res = await fetch(docPath, { method: 'GET' });
+    }
+    if (!res.ok) return null;
+    const data = await res.json();
+    const f = data.fields || {};
+    return {
+      dailyBudget: f.dailyBudget?.doubleValue !== undefined ? Number(f.dailyBudget.doubleValue) : (f.dailyBudget?.integerValue !== undefined ? Number(f.dailyBudget.integerValue) : null),
+      name: f.name?.stringValue || null,
+      email: f.email?.stringValue || null
+    };
+  } catch (err) {
+    console.warn('Firestore fetch profile error:', err);
+    return null;
   }
 };
 

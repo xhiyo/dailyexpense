@@ -48,7 +48,15 @@ import { CookieConsentBanner } from './components/CookieConsentBanner';
 import { InstallPromptModal } from './components/InstallPromptModal';
 import { Toast } from './components/Toast';
 import { formatCurrency } from './utils/storage';
-import { syncExpenseToFirestore, syncUserProfileToFirestore, syncAllLocalUsersToFirestore } from './utils/firebase';
+import {
+  syncExpenseToFirestore,
+  syncUserProfileToFirestore,
+  syncAllLocalUsersToFirestore,
+  fetchExpensesFromFirestore,
+  deleteExpenseFromFirestore,
+  syncAllExpensesToFirestore,
+  fetchUserProfileFromFirestore
+} from './utils/firebase';
 import { useTranslation } from './i18n/LanguageContext';
 
 const ROUTE_PATHS = {
@@ -256,7 +264,8 @@ function App() {
   // Synchronize data when active user changes (Login, Logout, Switch Account)
   useEffect(() => {
     if (loadedUserIdRef.current !== activeUserId) {
-      setExpenses(loadExpenses(activeUserId));
+      const localExpenses = loadExpenses(activeUserId);
+      setExpenses(localExpenses);
 
       // Migrate any pending guest budget to authenticated user account ONLY if explicitly requested
       const pendingBudgetRaw = localStorage.getItem('spendwise_pending_guest_budget');
@@ -277,8 +286,35 @@ function App() {
       setCategories(loadCategories(activeUserId));
       setLastViewedTxTime(loadLastViewedTxTime(activeUserId));
       loadedUserIdRef.current = activeUserId;
+
+      // Cloud Sync: If user is authenticated, pull from Firestore Cloud Database
+      if (currentUser?.id && activeUserId !== 'guest') {
+        fetchExpensesFromFirestore(activeUserId, currentUser.idToken).then(cloudExpenses => {
+          if (cloudExpenses && cloudExpenses.length > 0) {
+            setExpenses(prev => {
+              const map = new Map();
+              prev.forEach(e => map.set(String(e.id), e));
+              cloudExpenses.forEach(e => map.set(String(e.id), e));
+              const merged = Array.from(map.values());
+              saveExpenses(merged, activeUserId);
+              return merged;
+            });
+          } else if (localExpenses && localExpenses.length > 0) {
+            // Local expenses exist but cloud is empty: push to Firestore
+            syncAllExpensesToFirestore(activeUserId, currentUser.idToken, localExpenses);
+          }
+        }).catch(err => console.warn('Cloud sync error:', err));
+
+        // Restore cloud budget if exists
+        fetchUserProfileFromFirestore(activeUserId, currentUser.idToken).then(profile => {
+          if (profile?.dailyBudget !== null && profile?.dailyBudget !== undefined && profile.dailyBudget > 0) {
+            setDailyBudget(profile.dailyBudget);
+            saveDailyBudget(profile.dailyBudget, activeUserId);
+          }
+        }).catch(err => console.warn('Cloud profile sync error:', err));
+      }
     }
-  }, [activeUserId]);
+  }, [activeUserId, currentUser]);
 
   // When user opens 'transactions' tab, clear unread notifications immediately
   useEffect(() => {
@@ -405,6 +441,21 @@ function App() {
         setIsAuthModalOpen(false);
         setIsLinkingAccount(false);
         return;
+      }
+    }
+
+    // Seamless local-to-cloud migration:
+    // If user has local guest expenses, migrate them into the user's account and sync to Firestore
+    const guestExpenses = loadExpenses('guest');
+    if (guestExpenses && guestExpenses.length > 0) {
+      let currentAccExpenses = loadExpenses(user.id);
+      const existingIds = new Set(currentAccExpenses.map(e => String(e.id)));
+      const newItemsFromGuest = guestExpenses.filter(e => !existingIds.has(String(e.id)));
+      if (newItemsFromGuest.length > 0) {
+        const merged = [...currentAccExpenses, ...newItemsFromGuest];
+        saveExpenses(merged, user.id);
+        saveExpenses([], 'guest'); // clean up guest storage
+        syncAllExpensesToFirestore(user.id, user.idToken, merged);
       }
     }
 
@@ -551,7 +602,14 @@ function App() {
     if (!target) return;
 
     if (window.confirm(language === 'en' ? `Delete expense "${target.title}"?` : `Hapus pengeluaran "${target.title}"?`)) {
-      setExpenses(prev => prev.filter(e => e.id !== id));
+      setExpenses(prev => {
+        const updated = prev.filter(e => e.id !== id);
+        saveExpenses(updated, activeUserId);
+        return updated;
+      });
+      if (currentUser?.id) {
+        deleteExpenseFromFirestore(currentUser.id, currentUser.idToken, id);
+      }
       showToast(language === 'en' ? `Expense "${target.title}" has been deleted` : `Pengeluaran "${target.title}" telah dihapus`, 'info');
     }
   };
