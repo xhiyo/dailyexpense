@@ -289,7 +289,18 @@ function App() {
 
       // Cloud Sync: If user is authenticated, pull from Firestore Cloud Database
       if (currentUser?.id && activeUserId !== 'guest') {
-        fetchExpensesFromFirestore(activeUserId, currentUser.idToken).then(cloudExpenses => {
+        // Try with idToken first, then fallback to unauthenticated (for local-email accounts or expired tokens)
+        const tryFetchExpenses = async () => {
+          let cloudExpenses = await fetchExpensesFromFirestore(activeUserId, currentUser.idToken);
+          // If first attempt returns empty but we have no local data either, try without token
+          // (open Firestore rules may allow read, which helps local-email accounts)
+          if ((!cloudExpenses || cloudExpenses.length === 0) && !currentUser.idToken) {
+            cloudExpenses = await fetchExpensesFromFirestore(activeUserId, null);
+          }
+          return cloudExpenses;
+        };
+
+        tryFetchExpenses().then(cloudExpenses => {
           if (cloudExpenses && cloudExpenses.length > 0) {
             setExpenses(prev => {
               const map = new Map();
@@ -303,10 +314,18 @@ function App() {
             // Local expenses exist but cloud is empty: push to Firestore
             syncAllExpensesToFirestore(activeUserId, currentUser.idToken, localExpenses);
           }
+          // If both cloud and local are empty, keep current state (don't reset to [])
         }).catch(err => console.warn('Cloud sync error:', err));
 
         // Restore cloud budget if exists
-        fetchUserProfileFromFirestore(activeUserId, currentUser.idToken).then(profile => {
+        const tryFetchProfile = async () => {
+          let profile = await fetchUserProfileFromFirestore(activeUserId, currentUser.idToken);
+          if (!profile && !currentUser.idToken) {
+            profile = await fetchUserProfileFromFirestore(activeUserId, null);
+          }
+          return profile;
+        };
+        tryFetchProfile().then(profile => {
           if (profile?.dailyBudget !== null && profile?.dailyBudget !== undefined && profile.dailyBudget > 0) {
             setDailyBudget(profile.dailyBudget);
             saveDailyBudget(profile.dailyBudget, activeUserId);
@@ -447,17 +466,19 @@ function App() {
     // Seamless local-to-cloud migration:
     // If user has local guest expenses, migrate them into the user's account and sync to Firestore
     const guestExpenses = loadExpenses('guest');
+    let finalExpensesForUser = loadExpenses(user.id);
     if (guestExpenses && guestExpenses.length > 0) {
-      let currentAccExpenses = loadExpenses(user.id);
-      const existingIds = new Set(currentAccExpenses.map(e => String(e.id)));
+      const existingIds = new Set(finalExpensesForUser.map(e => String(e.id)));
       const newItemsFromGuest = guestExpenses.filter(e => !existingIds.has(String(e.id)));
       if (newItemsFromGuest.length > 0) {
-        const merged = [...currentAccExpenses, ...newItemsFromGuest];
-        saveExpenses(merged, user.id);
+        finalExpensesForUser = [...finalExpensesForUser, ...newItemsFromGuest];
+        saveExpenses(finalExpensesForUser, user.id);
         saveExpenses([], 'guest'); // clean up guest storage
-        syncAllExpensesToFirestore(user.id, user.idToken, merged);
+        syncAllExpensesToFirestore(user.id, user.idToken, finalExpensesForUser);
       }
     }
+    // Immediately update UI with the user's local data so there's no blank flash
+    setExpenses(finalExpensesForUser);
 
     const updatedList = addLinkedAccount(user);
     setLinkedAccounts(updatedList);
