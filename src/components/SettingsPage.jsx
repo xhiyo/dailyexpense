@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, FileSpreadsheet, CloudUpload, CloudDownload, RefreshCw } from 'lucide-react';
+import { Check, FileSpreadsheet } from 'lucide-react';
 import { CURRENCIES, getBudgetPresets, convertCurrencyAmount } from '../data/categories';
 import { formatCurrency, ACCENT_COLORS } from '../utils/storage';
 import { UserAvatar } from './UserAvatar';
@@ -20,26 +20,11 @@ export const SettingsPage = ({
   onOpenAuthModal,
   onLogout,
   onResetData,
-  onSyncToCloud,
   onBackToDashboard,
   onOpenCookieSettings
 }) => {
   const { t, language, setLanguage } = useTranslation();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [syncStatus, setSyncStatus] = useState(null); // null | 'syncing' | 'done' | 'error'
-
-  const handleSyncNow = async () => {
-    if (!onSyncToCloud) return;
-    setSyncStatus('syncing');
-    try {
-      await onSyncToCloud();
-      setSyncStatus('done');
-      setTimeout(() => setSyncStatus(null), 4000);
-    } catch {
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus(null), 4000);
-    }
-  };
 
   const handleConfirmReset = () => {
     onResetData();
@@ -497,50 +482,7 @@ export const SettingsPage = ({
           </div>
         </div>
 
-        {/* Card 7: Sinkronisasi Cloud */}
-        {onSyncToCloud && (
-          <div className="settings-modern-card">
-            <div className="settings-modern-card-header">
-              <h4 className="settings-card-title">☁️ {language === 'en' ? 'Cloud Backup & Sync' : 'Backup & Sinkronisasi Cloud'}</h4>
-              <p className="settings-card-subtitle">
-                {language === 'en'
-                  ? "Push all local data to Firestore Cloud so it's accessible from any device."
-                  : 'Push semua data lokal ke Firestore Cloud agar bisa diakses dari perangkat lain.'}
-              </p>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-                {language === 'en'
-                  ? 'If your data is missing on another device, open the app here first and click the button below to upload your data to the cloud.'
-                  : 'Jika data tidak muncul di perangkat lain, buka app di sini terlebih dahulu dan klik tombol di bawah untuk mengunggah data ke cloud.'}
-              </p>
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleSyncNow}
-                disabled={syncStatus === 'syncing'}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', width: 'fit-content' }}
-              >
-                {syncStatus === 'syncing' ? (
-                  <><RefreshCw size={16} className="spin-icon" /> {language === 'en' ? 'Syncing...' : 'Menyinkronkan...'}</>
-                ) : syncStatus === 'done' ? (
-                  <><Check size={16} /> {language === 'en' ? 'Sync Complete!' : 'Sinkronisasi Selesai!'}</>
-                ) : syncStatus === 'error' ? (
-                  <><CloudUpload size={16} /> {language === 'en' ? 'Failed, try again' : 'Gagal, coba lagi'}</>
-                ) : (
-                  <><CloudUpload size={16} /> {language === 'en' ? 'Backup to Cloud Now' : 'Backup ke Cloud Sekarang'}</>
-                )}
-              </button>
-              {syncStatus === 'done' && (
-                <p style={{ fontSize: '13px', color: 'var(--color-success, #22c55e)', margin: 0 }}>
-                  ✅ {language === 'en' ? 'Data uploaded! Now open the app on your other device and log in.' : 'Data berhasil diunggah! Sekarang buka app di perangkat lain dan login.'}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Card 8: Zona Berbahaya (Danger Zone) */}
+        {/* Card 7: Zona Berbahaya (Danger Zone) */}
         <div className="settings-modern-card card-danger-modern">
           <div className="settings-modern-card-header">
             <h4 className="settings-card-title text-danger">{t('settings.dangerTitle')}</h4>

@@ -97,6 +97,11 @@ function App() {
   const activeUserId = currentUser?.id || 'guest';
   const loadedUserIdRef = useRef(activeUserId);
 
+  // Budget timestamp helpers — used for last-write-wins sync across devices
+  const budgetTsKey = (uid) => `spendwise_budget_ts_v1_${String(uid).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+  const loadBudgetTs = (uid) => { try { return Number(localStorage.getItem(budgetTsKey(uid))) || 0; } catch { return 0; } };
+  const saveBudgetTs = (uid, ts) => { try { localStorage.setItem(budgetTsKey(uid), String(ts)); } catch {} };
+
   // Auto-sync user profiles on load
   useEffect(() => {
     syncAllLocalUsersToFirestore();
@@ -106,27 +111,41 @@ function App() {
     });
   }, []);
 
-  // On startup: pull from cloud to sync data from other devices
+  // On startup: automatic cloud sync — fully transparent, no user action needed
   const didInitialSyncRef = useRef(false);
   useEffect(() => {
     if (!currentUser?.id || currentUser.id === 'guest') return;
-    if (didInitialSyncRef.current) return; // only run once per session
+    if (didInitialSyncRef.current) return;
     didInitialSyncRef.current = true;
 
     const userId = currentUser.id;
     const idToken = currentUser.idToken || null;
 
-    // Pull cloud → local: budget takes priority from cloud
-    // (DON'T push local budget on startup — it causes race condition where
-    //  mobile's stale budget overwrites desktop's correct one)
-    fetchUserProfileFromFirestore(userId, idToken).then(profile => {
-      if (profile?.dailyBudget > 0) {
-        setDailyBudget(profile.dailyBudget);
-        saveDailyBudget(profile.dailyBudget, userId);
-      }
-    }).catch(err => console.warn('Cloud pull profile error:', err));
+    // --- BUDGET: last-write-wins based on timestamp ---
+    const localBudget = loadDailyBudget(userId);
+    const localBudgetTs = loadBudgetTs(userId);
 
-    // Pull cloud → local: merge cloud expenses with local ones
+    fetchUserProfileFromFirestore(userId, idToken).then(profile => {
+      const cloudBudget = profile?.dailyBudget || 0;
+      const cloudTs = profile?.budgetUpdatedAt || 0;
+
+      if (cloudTs > localBudgetTs && cloudBudget > 0) {
+        // Cloud is newer → use cloud budget
+        setDailyBudget(cloudBudget);
+        saveDailyBudget(cloudBudget, userId);
+        saveBudgetTs(userId, cloudTs);
+      } else if (localBudgetTs > cloudTs && localBudget > 0) {
+        // Local is newer → push to cloud
+        syncUserProfileToFirestore(currentUser, { dailyBudget: localBudget, budgetUpdatedAt: localBudgetTs });
+      } else if (cloudBudget > 0 && localBudgetTs === 0) {
+        // First time on this device, no local timestamp → use cloud
+        setDailyBudget(cloudBudget);
+        saveDailyBudget(cloudBudget, userId);
+        saveBudgetTs(userId, cloudTs || Date.now());
+      }
+    }).catch(err => console.warn('Cloud budget sync error:', err));
+
+    // --- EXPENSES: merge cloud + local (union by ID) ---
     fetchExpensesFromFirestore(userId, idToken).then(cloudExpenses => {
       if (cloudExpenses && cloudExpenses.length > 0) {
         setExpenses(prev => {
@@ -138,10 +157,9 @@ function App() {
           return merged;
         });
       }
-    }).catch(err => console.warn('Cloud pull expenses error:', err));
+    }).catch(err => console.warn('Cloud expenses sync error:', err));
 
-    // Push local expenses → cloud (backup this device's data)
-    // Only expenses are pushed on startup — budget is NOT pushed here
+    // Push local expenses to cloud (backup)
     const localExp = loadExpenses(userId);
     if (localExp.length > 0) {
       syncAllExpensesToFirestore(userId, idToken, localExp);
@@ -716,7 +734,10 @@ function App() {
     setDailyBudget(newBudget);
     saveDailyBudget(newBudget, activeUserId, true);
     if (currentUser?.id) {
-      syncUserProfileToFirestore(currentUser, { dailyBudget: newBudget });
+      // Save timestamp so other devices know this is the most recent budget
+      const ts = Date.now();
+      saveBudgetTs(activeUserId, ts);
+      syncUserProfileToFirestore(currentUser, { dailyBudget: newBudget, budgetUpdatedAt: ts });
     }
 
     if (!currentUser) {

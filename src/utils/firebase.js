@@ -349,6 +349,9 @@ export const syncUserProfileToFirestore = async (user, additionalData = {}) => {
   if (additionalData.dailyBudget !== undefined) {
     fields.dailyBudget = { doubleValue: Number(additionalData.dailyBudget) || 0 };
   }
+  if (additionalData.budgetUpdatedAt !== undefined) {
+    fields.budgetUpdatedAt = { integerValue: String(Number(additionalData.budgetUpdatedAt)) };
+  }
 
   try {
     let res = await fetch(docPath, {
@@ -534,6 +537,7 @@ export const fetchUserProfileFromFirestore = async (userId, idToken = null) => {
     const f = data.fields || {};
     return {
       dailyBudget: f.dailyBudget?.doubleValue !== undefined ? Number(f.dailyBudget.doubleValue) : (f.dailyBudget?.integerValue !== undefined ? Number(f.dailyBudget.integerValue) : null),
+      budgetUpdatedAt: f.budgetUpdatedAt?.integerValue ? Number(f.budgetUpdatedAt.integerValue) : 0,
       name: f.name?.stringValue || null,
       email: f.email?.stringValue || null
     };
