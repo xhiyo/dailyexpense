@@ -5591,12 +5591,11 @@ select.expense-input {
   }
 
   .mobile-app-name {
-    font-size: 0.95rem;
-    font-weight: 800;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
     letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
   }
 
   .mobile-app-page-tag {
@@ -5765,7 +5764,6 @@ select.expense-input {
   .mobile-fab-container {
     flex: 1;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
@@ -5776,10 +5774,10 @@ select.expense-input {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent-primary, #2563eb), #4338ca);
+    background: var(--accent-primary, #2563eb);
     color: #ffffff;
     border: 3.5px solid var(--bg-card);
-    box-shadow: 0 8px 18px -2px rgba(37, 99, 235, 0.5);
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5791,8 +5789,8 @@ select.expense-input {
   }
 
   .mobile-fab-btn:active {
-    transform: scale(0.9);
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
   }
 
   .mobile-fab-icon {
@@ -5800,11 +5798,7 @@ select.expense-input {
   }
 
   .mobile-fab-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--accent-primary);
-    margin-top: 2px;
-    line-height: 1;
+    display: none !important;
   }
 
   /* 4. Mobile Menu Bottom Sheet */

@@ -61,10 +61,8 @@ export const MobileBottomNav = ({
             title={t('expenses.newExpenseBtn')}
             aria-label={t('expenses.newExpenseBtn')}
           >
-            <div className="mobile-fab-glow" />
             <Plus size={24} className="mobile-fab-icon" />
           </button>
-          <span className="mobile-fab-label">{t('expenses.addExpense')}</span>
         </div>
 
         {/* Tab 4: Categories / Kategori */}
