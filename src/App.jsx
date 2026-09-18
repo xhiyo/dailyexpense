@@ -805,6 +805,17 @@ function App() {
     showToast(t('toasts.dataCleared'), 'info');
   };
 
+  // Manual cloud backup: push all local expenses + profile to Firestore
+  const handleSyncToCloud = async () => {
+    if (!currentUser?.id || currentUser.id === 'guest') {
+      showToast(language === 'en' ? 'Please log in to sync.' : 'Silakan login terlebih dahulu.', 'warning');
+      return;
+    }
+    await syncAllExpensesToFirestore(currentUser.id, currentUser.idToken, expenses);
+    await syncUserProfileToFirestore(currentUser, { dailyBudget });
+    showToast(language === 'en' ? `${expenses.length} expenses backed up to cloud!` : `${expenses.length} transaksi berhasil di-backup ke cloud!`);
+  };
+
   return (
     <>
       <div className="app-layout">
@@ -951,6 +962,7 @@ function App() {
             onOpenAuthModal={handleOpenLogin}
             onLogout={handleLogout}
             onResetData={handleResetData}
+            onSyncToCloud={currentUser ? handleSyncToCloud : undefined}
             onBackToDashboard={() => navigateTo('dashboard')}
             onOpenCookieSettings={() => setIsCookieBannerOpen(true)}
           />
