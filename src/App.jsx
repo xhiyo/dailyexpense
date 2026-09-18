@@ -106,7 +106,7 @@ function App() {
     });
   }, []);
 
-  // On startup: two-way cloud sync whenever we have a logged-in user
+  // On startup: pull from cloud to sync data from other devices
   const didInitialSyncRef = useRef(false);
   useEffect(() => {
     if (!currentUser?.id || currentUser.id === 'guest') return;
@@ -115,16 +115,18 @@ function App() {
 
     const userId = currentUser.id;
     const idToken = currentUser.idToken || null;
-    const localExp = loadExpenses(userId);
 
-    // Push local → cloud (backup everything on this device)
-    // Always sync profile/budget, regardless of whether expenses exist
-    syncUserProfileToFirestore(currentUser, { dailyBudget });
-    if (localExp.length > 0) {
-      syncAllExpensesToFirestore(userId, idToken, localExp);
-    }
+    // Pull cloud → local: budget takes priority from cloud
+    // (DON'T push local budget on startup — it causes race condition where
+    //  mobile's stale budget overwrites desktop's correct one)
+    fetchUserProfileFromFirestore(userId, idToken).then(profile => {
+      if (profile?.dailyBudget > 0) {
+        setDailyBudget(profile.dailyBudget);
+        saveDailyBudget(profile.dailyBudget, userId);
+      }
+    }).catch(err => console.warn('Cloud pull profile error:', err));
 
-    // Pull cloud → local (get data from other devices)
+    // Pull cloud → local: merge cloud expenses with local ones
     fetchExpensesFromFirestore(userId, idToken).then(cloudExpenses => {
       if (cloudExpenses && cloudExpenses.length > 0) {
         setExpenses(prev => {
@@ -138,13 +140,12 @@ function App() {
       }
     }).catch(err => console.warn('Cloud pull expenses error:', err));
 
-    // Pull daily budget from cloud profile
-    fetchUserProfileFromFirestore(userId, idToken).then(profile => {
-      if (profile?.dailyBudget > 0) {
-        setDailyBudget(profile.dailyBudget);
-        saveDailyBudget(profile.dailyBudget, userId);
-      }
-    }).catch(err => console.warn('Cloud pull profile error:', err));
+    // Push local expenses → cloud (backup this device's data)
+    // Only expenses are pushed on startup — budget is NOT pushed here
+    const localExp = loadExpenses(userId);
+    if (localExp.length > 0) {
+      syncAllExpensesToFirestore(userId, idToken, localExp);
+    }
   }, [currentUser?.id]);
 
   // Sync linked accounts when currentUser changes and sync to Firestore
@@ -152,7 +153,9 @@ function App() {
     if (currentUser?.id) {
       addLinkedAccount(currentUser);
       setLinkedAccounts(loadLinkedAccounts());
-      syncUserProfileToFirestore(currentUser, { dailyBudget });
+      // Only sync profile info (name/avatar/etc), NOT budget here.
+      // Budget is only pushed when user explicitly sets it via handleUpdateDailyBudget.
+      syncUserProfileToFirestore(currentUser);
     }
   }, [currentUser]);
 
