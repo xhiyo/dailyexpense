@@ -169,7 +169,7 @@ export const ChartsSection = ({
             className={`segmented-btn ${timeframe === 'custom' ? 'is-active' : ''}`}
             onClick={() => setTimeframe('custom')}
           >
-            <Calendar size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+            <Calendar size={13} className="segmented-btn-icon" style={{ marginRight: 4, verticalAlign: 'middle' }} />
             {language === 'en' ? 'Custom' : 'Kustom'}
           </button>
         </div>

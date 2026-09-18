@@ -128,9 +128,9 @@ export const DailySummaryCards = ({
           )}
         </div>
         <div className="kpi-body">
-          <div className="kpi-amount font-mono" style={{ fontSize: '1.38rem' }}>
+          <div className="kpi-amount font-mono">
             {!hasBudget ? (
-              <span className="kpi-amount font-mono" style={{ fontSize: '1.45rem' }}>{currency} ∞</span>
+              <span className="kpi-amount font-mono">{currency} ∞</span>
             ) : isOverBudget ? (
               <span className="text-danger">
                 +{formatCurrency(totalSpent - dailyBudget, currency)}

@@ -109,9 +109,10 @@ export const DateNavigator = ({
               type="button"
               className="date-nav-jump-today"
               onClick={() => onSelectDate(todayStr)}
+              title={language === 'en' ? 'Back to Today' : 'Kembali ke Hari Ini'}
             >
               <RotateCcw size={12} />
-              {language === 'en' ? 'Back to Today' : 'Kembali ke Hari Ini'}
+              <span>{language === 'en' ? 'Today' : 'Hari Ini'}</span>
             </button>
           )}
         </div>
