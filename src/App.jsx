@@ -106,6 +106,32 @@ function App() {
         syncUserProfileToFirestore(acc);
       }
     });
+
+    // On app start: if user is already logged in, push all local expenses to cloud
+    // AND pull from cloud to merge any data entered on other devices.
+    const initialUser = loadCurrentUser();
+    if (initialUser?.id && initialUser.id !== 'guest') {
+      const localExp = loadExpenses(initialUser.id);
+
+      // Push local → cloud (upload data that may never have been synced)
+      if (localExp.length > 0) {
+        syncAllExpensesToFirestore(initialUser.id, initialUser.idToken, localExp);
+      }
+
+      // Pull cloud → local (download data from other devices)
+      fetchExpensesFromFirestore(initialUser.id, initialUser.idToken).then(cloudExpenses => {
+        if (cloudExpenses && cloudExpenses.length > 0) {
+          setExpenses(prev => {
+            const map = new Map();
+            prev.forEach(e => map.set(String(e.id), e));
+            cloudExpenses.forEach(e => map.set(String(e.id), e));
+            const merged = Array.from(map.values());
+            saveExpenses(merged, initialUser.id);
+            return merged;
+          });
+        }
+      }).catch(err => console.warn('Initial cloud pull error:', err));
+    }
   }, []);
 
   // Sync linked accounts when currentUser changes and sync to Firestore
@@ -474,9 +500,15 @@ function App() {
         finalExpensesForUser = [...finalExpensesForUser, ...newItemsFromGuest];
         saveExpenses(finalExpensesForUser, user.id);
         saveExpenses([], 'guest'); // clean up guest storage
-        syncAllExpensesToFirestore(user.id, user.idToken, finalExpensesForUser);
       }
     }
+
+    // Always push local data to Firestore on every login so other devices can pull it later.
+    // This is the key step that ensures cross-device sync even for local-email accounts.
+    if (finalExpensesForUser.length > 0) {
+      syncAllExpensesToFirestore(user.id, user.idToken, finalExpensesForUser);
+    }
+
     // Immediately update UI with the user's local data so there's no blank flash
     setExpenses(finalExpensesForUser);
 
