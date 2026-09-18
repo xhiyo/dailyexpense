@@ -6282,14 +6282,81 @@ select.expense-input {
     font-size: 0.9rem !important;
   }
 
+  /* 5. Dashboard Spacing on Mobile */
+  .tab-dashboard-view {
+    gap: 16px !important;
+  }
+
   /* 6. Mobile Date Strip & Controls */
+  .modern-date-nav-wrapper {
+    padding: 12px !important;
+    gap: 10px !important;
+    border-radius: var(--radius-md, 12px) !important;
+  }
+
+  .date-nav-topbar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 0 !important;
+  }
+
+  .date-nav-current-info {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .date-nav-heading {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+  }
+
+  .date-nav-jump-today,
+  .date-nav-today-tag {
+    font-size: 0.7rem !important;
+    padding: 3px 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .date-nav-controls {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .date-nav-arrow {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: var(--radius-sm, 8px) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .date-nav-picker-wrap {
+    flex: 1 !important;
+  }
+
+  .date-nav-picker-button {
+    width: 100% !important;
+    height: 36px !important;
+    font-size: 0.8rem !important;
+    justify-content: center !important;
+    padding: 0 10px !important;
+  }
+
   .date-nav-pill-strip {
     display: flex !important;
     overflow-x: auto !important;
     scroll-snap-type: x mandatory !important;
     -webkit-overflow-scrolling: touch !important;
     gap: 8px !important;
-    padding: 4px 2px 8px !important;
+    padding: 4px 2px 6px !important;
     scrollbar-width: none !important;
   }
 
@@ -6298,41 +6365,137 @@ select.expense-input {
   }
 
   .date-nav-pill-btn {
-    flex: 0 0 76px !important;
-    min-width: 76px !important;
+    flex: 0 0 78px !important;
+    min-width: 78px !important;
+    height: 80px !important;
     scroll-snap-align: center !important;
-    padding: 8px 4px !important;
+    padding: 6px 4px !important;
+    border-radius: var(--radius-md, 10px) !important;
   }
 
-  .date-nav-topbar {
-    padding: 4px 2px 8px !important;
-    flex-wrap: wrap !important;
-    gap: 8px !important;
+  .pill-weekday {
+    font-size: 0.7rem !important;
   }
 
-  .date-nav-heading {
-    font-size: 1.05rem !important;
+  .pill-daynumber {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
   }
 
-  /* 7. Mobile KPI Grid Section */
+  .pill-spend-slot {
+    font-size: 0.65rem !important;
+  }
+
+  /* 7. Mobile KPI Grid Section (Comfortable & No Colliding Text) */
   .kpi-grid-section {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
   }
 
   .kpi-card {
-    padding: 12px 14px !important;
+    height: auto !important;
+    min-height: 126px !important;
+    padding: 12px 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    border-radius: var(--radius-md, 12px) !important;
+  }
+
+  .kpi-card-header {
+    height: auto !important;
+    min-height: 18px !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .kpi-label {
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em !important;
+    line-height: 1.25 !important;
+    word-break: normal !important;
+  }
+
+  .kpi-body {
+    margin: 2px 0 !important;
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
   .kpi-amount {
-    font-size: 1.25rem !important;
+    font-size: 1.15rem !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .kpi-top-category-row {
+    max-width: 100% !important;
+  }
+
+  .kpi-top-category-name {
+    font-size: 0.92rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .kpi-footer {
+    height: auto !important;
+    min-height: 18px !important;
+    font-size: 0.72rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .kpi-meta-text {
+    font-size: 0.72rem !important;
+    white-space: normal !important;
+    line-height: 1.25 !important;
+    display: block !important;
+  }
+
+  /* Card 2 Daily budget progress on mobile */
+  .kpi-progress-wrap {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .kpi-progress-track {
+    height: 5px !important;
+  }
+
+  .kpi-progress-meta {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+    font-size: 0.68rem !important;
+    line-height: 1.2 !important;
   }
 
   /* 8. Mobile Transaction Feed Touch Adjustments */
+  .modern-expense-section {
+    border-radius: var(--radius-md, 12px) !important;
+  }
+
   .modern-section-header {
+    padding: 14px 14px !important;
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 8px !important;
+    gap: 6px !important;
+  }
+
+  .modern-section-title {
+    font-size: 1.05rem !important;
+  }
+
+  .section-heading-meta {
+    font-size: 0.76rem !important;
+    line-height: 1.3 !important;
   }
 
   .modern-section-header .btn-add-primary {
@@ -6340,47 +6503,192 @@ select.expense-input {
   }
 
   .modern-toolbar {
+    padding: 12px 14px !important;
     flex-direction: column !important;
-    gap: 8px !important;
+    gap: 10px !important;
     align-items: stretch !important;
   }
 
   .modern-search-input-wrap {
     width: 100% !important;
+    height: 40px !important;
   }
 
+  /* 2-Column row for filters on mobile so text is legible and not crushed */
   .modern-filter-group {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 6px !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
     width: 100% !important;
+  }
+
+  .modern-filter-group .modern-select-pill:nth-child(3) {
+    grid-column: 1 / -1 !important;
+  }
+
+  .modern-select-pill {
+    height: 38px !important;
+    padding: 0 10px !important;
+    border-radius: var(--radius-sm, 8px) !important;
   }
 
   .modern-select-pill select {
-    font-size: 0.75rem !important;
-    padding: 6px 8px !important;
+    font-size: 0.8rem !important;
     width: 100% !important;
   }
 
+  /* Responsive Grid-area for Transactions on Mobile */
+  .modern-transaction-list {
+    padding: 0 !important;
+  }
+
   .modern-transaction-item {
-    grid-template-columns: auto 1fr auto !important;
-    padding: 12px 12px !important;
-    gap: 10px !important;
+    display: grid !important;
+    grid-template-columns: 10px 1fr auto !important;
+    grid-template-areas:
+      "dot details amount"
+      "dot details actions" !important;
+    align-items: center !important;
+    gap: 4px 10px !important;
+    padding: 12px 14px !important;
+  }
+
+  .tx-indicator-cell {
+    grid-area: dot !important;
+    align-self: flex-start !important;
+    margin-top: 5px !important;
+  }
+
+  .tx-details {
+    grid-area: details !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+  }
+
+  .tx-title-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .tx-title {
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.25 !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+  }
+
+  .tx-cat-badge {
+    font-size: 0.68rem !important;
+    padding: 1px 6px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .tx-sub-row {
+    font-size: 0.72rem !important;
+    color: var(--text-muted) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+    line-height: 1.3 !important;
+    white-space: normal !important;
+  }
+
+  .tx-amount-col {
+    grid-area: amount !important;
+    text-align: right !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+  }
+
+  .tx-amount-value {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
   }
 
   .tx-actions-col {
+    grid-area: actions !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 4px !important;
     opacity: 1 !important;
     visibility: visible !important;
-    display: flex !important;
-    gap: 4px !important;
   }
 
   .tx-action-btn {
-    width: 28px !important;
-    height: 28px !important;
+    width: 26px !important;
+    height: 26px !important;
   }
 
-  /* 9. Settings & Categories Page Mobile Optimizations */
+  /* 9. Analytics & Charts Section on Mobile */
+  .modern-analytics-section {
+    border-radius: var(--radius-md, 12px) !important;
+  }
+
+  .analytics-header-bar {
+    padding: 14px 14px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .analytics-title {
+    font-size: 1.05rem !important;
+  }
+
+  .analytics-subtitle {
+    font-size: 0.74rem !important;
+    line-height: 1.3 !important;
+  }
+
+  .analytics-segmented-control {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    padding: 3px !important;
+  }
+
+  .segmented-btn {
+    padding: 6px 2px !important;
+    font-size: 0.72rem !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  .chart-meta-row {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+  }
+
+  .chart-meta-cell {
+    padding: 8px 10px !important;
+  }
+
+  .chart-meta-label {
+    font-size: 0.68rem !important;
+  }
+
+  .chart-meta-val {
+    font-size: 0.95rem !important;
+  }
+
+  .modern-bar-chart-container {
+    padding: 12px 10px 16px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* 10. Settings & Categories Page Mobile Optimizations */
   .settings-modern-grid {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
@@ -6398,13 +6706,6 @@ select.expense-input {
   .profile-grid-layout {
     grid-template-columns: 1fr !important;
     gap: 14px !important;
-  }
-}
-
-@media (max-width: 520px) {
-  .chart-meta-row {
-    grid-template-columns: 1fr;
-    gap: 6px;
   }
 }
 
