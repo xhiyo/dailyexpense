@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   X,
   Plus,
@@ -61,6 +61,35 @@ export const CategoryManagerModal = ({
   // View mode: 'list' | 'form'
   const [view, setView] = useState('list');
   const [editingId, setEditingId] = useState(null);
+  const modalContentRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const resetScroll = () => {
+        if (modalContentRef.current) {
+          modalContentRef.current.scrollTop = 0;
+        }
+      };
+      resetScroll();
+      const rAF = requestAnimationFrame(resetScroll);
+      const t1 = setTimeout(resetScroll, 60);
+      const t2 = setTimeout(resetScroll, 240);
+      return () => {
+        cancelAnimationFrame(rAF);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [isOpen, view]);
 
   // Form State
   const [name, setName] = useState('');
@@ -234,6 +263,7 @@ export const CategoryManagerModal = ({
     <div className="modal-overlay" onClick={onClose}>
       <div
         className="modal-content modal-category-manager"
+        ref={modalContentRef}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ========================================================
@@ -478,7 +508,7 @@ export const CategoryManagerModal = ({
                       if (error) setError('');
                     }}
                     maxLength={30}
-                    autoFocus
+                    autoFocus={!isMobile}
                   />
                 </div>
                 {error && <span className="cat-field-error">{error}</span>}

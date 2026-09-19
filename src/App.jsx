@@ -23,7 +23,8 @@ import {
   saveLastViewedTxTime,
   loadAccentColor,
   saveAccentColor,
-  ACCENT_COLORS
+  ACCENT_COLORS,
+  scrollAppToTop
 } from './utils/storage';
 
 import { DEFAULT_CATEGORIES, convertCurrencyAmount } from './data/categories';
@@ -280,7 +281,7 @@ function App() {
         window.history.pushState({ tab: tabName }, '', targetPath);
       }
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollAppToTop(true);
   };
 
   // Sync browser popstate (Back / Forward navigation)

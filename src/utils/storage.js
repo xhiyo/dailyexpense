@@ -814,3 +814,27 @@ export const saveLastViewedTxTime = (timestamp, userId = null) => {
     console.error('Failed to save last viewed tx time:', err);
   }
 };
+
+/**
+ * Universal scroll to top helper that scrolls both the custom .app-main-viewport
+ * container and the global window / body / documentElement.
+ */
+export const scrollAppToTop = (smooth = true) => {
+  if (typeof window === 'undefined') return;
+  const viewport = document.querySelector('.app-main-viewport');
+  if (viewport) {
+    if (typeof viewport.scrollTo === 'function') {
+      viewport.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+    } else {
+      viewport.scrollTop = 0;
+    }
+  }
+  window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+  if (document.documentElement) {
+    document.documentElement.scrollTop = 0;
+  }
+  if (document.body) {
+    document.body.scrollTop = 0;
+  }
+};
+

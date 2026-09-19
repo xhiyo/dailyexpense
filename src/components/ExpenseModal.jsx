@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Clock, CreditCard, Tag, ChevronDown, ChevronUp } from 'lucide-react';
 import { CATEGORIES, PAYMENT_METHODS, getQuickAmountChips } from '../data/categories';
 import { CategoryIcon } from './CategoryIcon';
@@ -27,6 +27,36 @@ export const ExpenseModal = ({
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState({});
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const modalContentRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Always reset modal scroll position to top when opened
+  useEffect(() => {
+    if (isOpen) {
+      const resetScroll = () => {
+        if (modalContentRef.current) {
+          modalContentRef.current.scrollTop = 0;
+        }
+      };
+      resetScroll();
+      const rAF = requestAnimationFrame(resetScroll);
+      const t1 = setTimeout(resetScroll, 60);
+      const t2 = setTimeout(resetScroll, 240);
+      return () => {
+        cancelAnimationFrame(rAF);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (expenseToEdit) {
@@ -117,7 +147,7 @@ export const ExpenseModal = ({
 
   return (
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content" ref={modalContentRef} onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="modal-header">
           <div>
@@ -176,7 +206,7 @@ export const ExpenseModal = ({
                   }
                   if (errors.amount) setErrors(prev => ({ ...prev, amount: null }));
                 }}
-                autoFocus
+                autoFocus={!isMobile}
               />
             </div>
             {errors.amount && <span className="field-error-msg">{errors.amount}</span>}

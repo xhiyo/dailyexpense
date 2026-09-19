@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { formatCurrency, formatNumberWithDots, parseCleanNumber } from '../utils/storage';
 import { getBudgetPresets } from '../data/categories';
@@ -21,6 +21,35 @@ export const BudgetModal = ({
   };
 
   const [budgetInput, setBudgetInput] = useState(() => formatValue(dailyBudget));
+  const modalRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const resetScroll = () => {
+        if (modalRef.current) {
+          modalRef.current.scrollTop = 0;
+        }
+      };
+      resetScroll();
+      const rAF = requestAnimationFrame(resetScroll);
+      const t1 = setTimeout(resetScroll, 60);
+      const t2 = setTimeout(resetScroll, 240);
+      return () => {
+        cancelAnimationFrame(rAF);
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,7 +95,7 @@ export const BudgetModal = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content budget-dialog-card" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content budget-dialog-card" ref={modalRef} onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="modal-header">
           <div className="modal-header-text">
@@ -118,7 +147,7 @@ export const BudgetModal = ({
                   className="budget-number-input font-mono"
                   value={budgetInput}
                   onChange={handleBudgetChange}
-                  autoFocus
+                  autoFocus={!isMobile}
                 />
               </div>
 

@@ -29,15 +29,19 @@ export const DateNavigator = ({
   const todayStr = useMemo(() => formatToISO(new Date()), []);
   const isSelectedToday = selectedDate === todayStr;
 
-  // Auto-scroll the active date pill into view on mobile
+  // Auto-scroll the active date pill into view horizontally without scrolling the whole page vertically
   useEffect(() => {
     if (stripRef.current) {
       const activeEl = stripRef.current.querySelector('.date-nav-pill-btn.is-selected');
       if (activeEl) {
-        activeEl.scrollIntoView({
-          behavior: 'smooth',
-          inline: 'center',
-          block: 'nearest'
+        const container = stripRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const activeRect = activeEl.getBoundingClientRect();
+        const relativeLeft = activeRect.left - containerRect.left + container.scrollLeft;
+        const scrollLeftTarget = relativeLeft - (container.clientWidth / 2) + (activeEl.clientWidth / 2);
+        container.scrollTo({
+          left: Math.max(0, scrollLeftTarget),
+          behavior: 'smooth'
         });
       }
     }

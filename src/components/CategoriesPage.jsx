@@ -19,6 +19,7 @@ import {
 } from './CategoryIcon';
 import { getCategoryStyles } from '../data/categories';
 import { useTranslation } from '../i18n/LanguageContext';
+import { scrollAppToTop } from '../utils/storage';
 
 const COLOR_PRESETS = [
   '#f97316', // Orange
@@ -56,6 +57,7 @@ export const CategoriesPage = ({
   onBackToDashboard
 }) => {
   const { t, language, localizeCategoryName } = useTranslation();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
   // View mode: 'list' | 'form'
   const [view, setView] = useState('list');
   const [editingId, setEditingId] = useState(null);
@@ -109,7 +111,9 @@ export const CategoriesPage = ({
     setSelectedGroup('Semua');
     setError('');
     setView('form');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollAppToTop(false);
+    requestAnimationFrame(() => scrollAppToTop(false));
+    setTimeout(() => scrollAppToTop(false), 50);
   };
 
   // Open edit form
@@ -124,13 +128,16 @@ export const CategoriesPage = ({
     setSelectedGroup('Semua');
     setError('');
     setView('form');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollAppToTop(false);
+    requestAnimationFrame(() => scrollAppToTop(false));
+    setTimeout(() => scrollAppToTop(false), 50);
   };
 
   const handleBackToList = () => {
     setView('list');
     setEditingId(null);
     setError('');
+    scrollAppToTop(false);
   };
 
   const handleSubmitForm = (e) => {
@@ -553,7 +560,7 @@ export const CategoriesPage = ({
                       if (error) setError('');
                     }}
                     maxLength={30}
-                    autoFocus
+                    autoFocus={!isMobile}
                     required
                   />
                 </div>
