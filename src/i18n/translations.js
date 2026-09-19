@@ -106,7 +106,12 @@ export const translations = {
       weeklyTrendTitle: '7-Day Spending Trend',
       categoryBreakdownTitle: 'Category Breakdown',
       noDataTitle: 'No data for analytics yet',
-      noDataDesc: 'Analytics and distribution charts will appear once you record expenses.'
+      noDataDesc: 'Analytics and distribution charts will appear once you record expenses.',
+      selectedDayTitle: 'Selected Day Overview',
+      viewInList: 'View in list',
+      withinBudget: 'Within Budget',
+      overBudget: 'Over Budget',
+      noExpenseDay: 'Zero Expenses'
     },
     modal: {
       addTitle: 'Record New Expense',
@@ -451,7 +456,12 @@ export const translations = {
       weeklyTrendTitle: 'Tren Pengeluaran 7 Hari Terakhir',
       categoryBreakdownTitle: 'Distribusi per Kategori',
       noDataTitle: 'Belum ada data analisis',
-      noDataDesc: 'Grafik dan diagram akan otomatis muncul setelah Anda mencatat pengeluaran.'
+      noDataDesc: 'Grafik dan diagram akan otomatis muncul setelah Anda mencatat pengeluaran.',
+      selectedDayTitle: 'Detail Hari Terpilih',
+      viewInList: 'Lihat di daftar',
+      withinBudget: 'Sesuai Batas Limit',
+      overBudget: 'Melebihi Batas Limit',
+      noExpenseDay: 'Tanpa Pengeluaran'
     },
     modal: {
       addTitle: 'Catat Pengeluaran Baru',

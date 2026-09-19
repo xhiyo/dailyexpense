@@ -1450,6 +1450,12 @@
   gap: 2px;
 }
 
+.analytics-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .analytics-title {
   font-size: 1.15rem;
   font-weight: 700;
@@ -1457,9 +1463,72 @@
   letter-spacing: -0.01em;
 }
 
+.analytics-today-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  animation: fadeInDay 0.2s ease;
+}
+
+.analytics-today-pill-btn:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 .analytics-subtitle {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+.analytics-actions-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.analytics-period-arrows {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.analytics-arrow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.analytics-arrow-btn:hover:not(:disabled) {
+  background: var(--bg-card);
+  color: var(--accent-primary);
+}
+
+.analytics-arrow-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .analytics-segmented-control {
@@ -1596,11 +1665,202 @@
   font-weight: 600;
 }
 
+/* 7.2 Interactive Active Day Inspector Card */
+.analytics-active-day-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-tertiary) 100%);
+  border: 1px solid var(--accent-border, var(--border-subtle));
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
+  margin-bottom: 8px;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+  animation: fadeInDay 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInDay {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.active-day-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.active-day-tag-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.active-day-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.active-day-tag.is-today {
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  border-color: var(--accent-border);
+}
+
+.active-day-date-str {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.active-day-amount-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.active-day-amount {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.active-day-count-badge {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.active-day-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.active-day-budget-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.active-day-budget-pill.is-under {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.active-day-budget-pill.is-over {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.active-day-budget-pill.is-zero,
+.active-day-budget-pill.is-neutral {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.budget-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.budget-pill-dot.dot-success {
+  background: #10b981;
+}
+
+.budget-pill-dot.dot-danger {
+  background: #ef4444;
+}
+
+.budget-pill-dot.dot-neutral {
+  background: var(--text-muted);
+}
+
+.active-day-jump-btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.active-day-jump-btn:hover {
+  background: var(--accent-subtle);
+  border-color: var(--accent-primary);
+  transform: translateX(1px);
+}
+
+.active-day-back-today-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.active-day-back-today-btn:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 .modern-bar-chart-container {
   width: 100%;
   padding-top: 28px;
-  padding-bottom: 6px;
-  overflow: visible;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  cursor: grab;
+  scrollbar-width: thin;
+}
+
+.modern-bar-chart-container.is-dragging {
+  cursor: grabbing !important;
+  user-select: none !important;
 }
 
 .modern-bar-chart {
@@ -1612,6 +1872,7 @@
   padding-top: 24px;
   gap: 8px;
   width: 100%;
+  min-width: max-content;
 }
 
 .modern-bar-chart.is-dense {
@@ -1626,7 +1887,14 @@
   cursor: pointer;
   position: relative;
   flex: 1 1 0%;
-  min-width: 0;
+  min-width: 44px;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modern-bar-chart.is-dense .bar-column {
+  min-width: 28px;
 }
 
 .bar-track {
@@ -6938,6 +7206,66 @@ select.expense-input {
   .modern-bar-chart.is-dense {
     min-width: 680px !important;
     gap: 4px !important;
+  }
+
+  .analytics-actions-wrap {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+  }
+
+  .analytics-period-arrows {
+    display: inline-flex !important;
+    flex-shrink: 0 !important;
+  }
+
+  .analytics-arrow-btn {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .bar-column {
+    min-width: 42px !important;
+  }
+
+  .modern-bar-chart.is-dense .bar-column {
+    min-width: 26px !important;
+  }
+
+  .active-day-back-today-btn {
+    font-size: 0.7rem !important;
+    padding: 3px 8px !important;
+  }
+
+  /* Mobile styles for active day inspector */
+  .analytics-active-day-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .active-day-amount {
+    font-size: 1.15rem !important;
+  }
+
+  .active-day-right {
+    width: 100% !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+  }
+
+  .active-day-budget-pill {
+    font-size: 0.7rem !important;
+    padding: 3px 8px !important;
+  }
+
+  .active-day-jump-btn {
+    font-size: 0.7rem !important;
+    padding: 4px 8px !important;
   }
 
   /* 10. Settings & Categories Page Mobile Optimizations */
