@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ChevronLeft, ChevronRight, RotateCcw, Calendar } from 'lucide-react';
-import { formatCurrency } from '../utils/storage';
+import { formatCurrency, formatCalendarSpend } from '../utils/storage';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export const DateNavigator = ({
@@ -172,28 +172,33 @@ export const DateNavigator = ({
 
       {/* Symmetric 7-Day Pill Selector with Identical Heights */}
       <div className="date-nav-pill-strip" ref={stripRef}>
-        {dayStrip.map((day) => (
-          <button
-            key={day.iso}
-            type="button"
-            className={`date-nav-pill-btn ${day.isSelected ? 'is-selected' : ''} ${day.isToday ? 'is-today' : ''}`}
-            onClick={() => onSelectDate(day.iso)}
-          >
-            <span className="pill-weekday">{day.weekday}</span>
-            <span className="pill-daynumber font-mono">{day.dayNumber}</span>
-            <div className="pill-spend-slot">
-              {day.total > 0 ? (
-                <span className="pill-has-spend font-mono">
-                  {formatCurrency(day.total, currency)}
-                </span>
-              ) : (
-                <span className="pill-zero-spend font-mono">
-                  {formatCurrency(0, currency)}
-                </span>
-              )}
-            </div>
-          </button>
-        ))}
+        {dayStrip.map((day) => {
+          const fullSpend = formatCurrency(day.total, currency);
+          const displaySpend = formatCalendarSpend(day.total, currency, language);
+          return (
+            <button
+              key={day.iso}
+              type="button"
+              className={`date-nav-pill-btn ${day.isSelected ? 'is-selected' : ''} ${day.isToday ? 'is-today' : ''}`}
+              onClick={() => onSelectDate(day.iso)}
+              title={`${day.weekday}, ${day.dayNumber} - ${fullSpend}`}
+            >
+              <span className="pill-weekday">{day.weekday}</span>
+              <span className="pill-daynumber">{day.dayNumber}</span>
+              <div className="pill-spend-slot" title={fullSpend}>
+                {day.total > 0 ? (
+                  <span className="pill-has-spend">
+                    {displaySpend}
+                  </span>
+                ) : (
+                  <span className="pill-zero-spend">
+                    {displaySpend}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

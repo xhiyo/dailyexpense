@@ -432,6 +432,35 @@ export const formatCurrency = (amount, symbol = 'Rp') => {
   return `${sym} ${formatted}`;
 };
 
+// Format tampilan nominal pada pill kalender harian (kompak jika jutaan/miliaran, rapi dan tidak dempet)
+export const formatCalendarSpend = (amount, symbol = 'Rp', language = 'id') => {
+  const num = Number(amount) || 0;
+  const sym = (symbol || 'Rp').trim();
+
+  if (num === 0) {
+    return `${sym} 0`;
+  }
+
+  // Jika nominal >= 1 Miliar
+  if (num >= 1000000000) {
+    const val = (num / 1000000000).toLocaleString(language === 'en' ? 'en-US' : 'id-ID', {
+      maximumFractionDigits: 1
+    });
+    return language === 'en' ? `${sym} ${val}B` : `${sym} ${val}M`;
+  }
+
+  // Jika nominal >= 1 Juta (misal: Rp 1,5jt atau $ 1.5M)
+  if (num >= 1000000) {
+    const val = (num / 1000000).toLocaleString(language === 'en' ? 'en-US' : 'id-ID', {
+      maximumFractionDigits: 1
+    });
+    return language === 'en' ? `${sym} ${val}M` : `${sym} ${val}jt`;
+  }
+
+  // Di bawah 1 Juta (misal: Rp 50.000 atau $ 150)
+  return formatCurrency(num, sym);
+};
+
 // Format angka dengan pemisah ribuan titik Indonesia (contoh: 50000 -> "50.000") atau standar valas
 export const formatNumberWithDots = (val, symbol = 'Rp') => {
   if (val === '' || val === null || val === undefined) return '';

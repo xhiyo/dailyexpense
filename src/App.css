@@ -1001,30 +1001,31 @@
 }
 
 .date-nav-pill-btn {
-  height: 66px;
+  height: 74px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 6px 4px;
-  border-radius: var(--radius-md);
+  justify-content: space-between;
+  padding: 8px 6px 7px;
+  border-radius: var(--radius-lg);
   background: var(--bg-tertiary);
   border: 1px solid transparent;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   cursor: pointer;
-  gap: 2px;
+  box-sizing: border-box;
 }
 
 .date-nav-pill-btn:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-subtle);
+  transform: translateY(-1px);
 }
 
 .date-nav-pill-btn.is-selected {
   background: var(--accent-primary);
   color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
 }
 
 .date-nav-pill-btn.is-today:not(.is-selected) {
@@ -1038,22 +1039,23 @@
 }
 
 .pill-weekday {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
+  line-height: 1.1;
 }
 
 .date-nav-pill-btn.is-selected .pill-weekday {
-  color: #ffffff;
-  opacity: 0.9;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .pill-daynumber {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  line-height: 1.1;
-  margin: 1px 0;
+  line-height: 1;
+  margin: 2px 0 3px;
   color: var(--text-primary);
 }
 
@@ -1062,16 +1064,23 @@
 }
 
 .pill-spend-slot {
-  height: 16px;
+  width: 100%;
+  min-height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 2px;
 }
 
 .pill-has-spend {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  line-height: 1.2;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 .date-nav-pill-btn.is-selected .pill-has-spend {
@@ -1079,15 +1088,20 @@
 }
 
 .pill-zero-spend {
-  font-size: 0.68rem;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
   font-weight: 500;
   color: var(--text-muted);
-  opacity: 0.6;
+  opacity: 0.75;
+  line-height: 1.2;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
 .date-nav-pill-btn.is-selected .pill-zero-spend {
-  color: #ffffff;
-  opacity: 0.75;
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0.9;
 }
 
 /* 6. Modern Expense Section (Unified Card Container) */
@@ -1669,17 +1683,24 @@
 
 .bar-fill-tooltip {
   position: absolute;
-  top: -24px;
+  top: -26px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.66rem;
+  font-weight: 700;
   color: var(--accent-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 6px;
+  border-radius: 6px;
+  box-shadow: var(--shadow-sm);
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--transition-fast);
-  z-index: 5;
+  z-index: 10;
 }
 
 /* Tooltip visible on hover and on selected bar */
@@ -6398,8 +6419,8 @@ select.expense-input {
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-x: contain !important;
     touch-action: pan-x pan-y !important;
-    gap: 6px !important;
-    padding: 4px 2px 6px !important;
+    gap: 8px !important;
+    padding: 4px 4px 8px !important;
     scrollbar-width: none !important;
   }
 
@@ -6408,38 +6429,90 @@ select.expense-input {
   }
 
   .date-nav-pill-btn {
-    flex: 0 0 56px !important;
-    min-width: 56px !important;
-    height: 62px !important;
+    flex: 0 0 74px !important;
+    min-width: 74px !important;
+    height: 78px !important;
     scroll-snap-align: center !important;
-    padding: 4px 2px !important;
-    border-radius: 12px !important;
+    padding: 8px 5px 7px !important;
+    border-radius: 14px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important;
-    gap: 1px !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    gap: 0 !important;
+    transition: transform var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+  }
+
+  .date-nav-pill-btn:active {
+    transform: scale(0.96) !important;
   }
 
   .pill-weekday {
-    font-size: 0.64rem !important;
+    font-size: 0.65rem !important;
     font-weight: 600 !important;
-    line-height: 1 !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    color: var(--text-muted) !important;
   }
 
   .pill-daynumber {
-    font-size: 1.05rem !important;
+    font-size: 1.18rem !important;
     font-weight: 700 !important;
-    line-height: 1.1 !important;
+    line-height: 1 !important;
+    margin: 2px 0 3px !important;
+    color: var(--text-primary) !important;
   }
 
   .pill-spend-slot {
-    font-size: 0.58rem !important;
-    line-height: 1 !important;
+    width: 100% !important;
+    min-height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 2px !important;
+    margin-top: 0 !important;
+  }
+
+  .pill-has-spend {
+    font-family: var(--font-sans) !important;
+    font-variant-numeric: tabular-nums !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    color: var(--accent-primary) !important;
     white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    max-width: 100% !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  .pill-zero-spend {
+    font-family: var(--font-sans) !important;
+    font-variant-numeric: tabular-nums !important;
+    font-size: 0.68rem !important;
+    font-weight: 500 !important;
+    line-height: 1.2 !important;
+    color: var(--text-muted) !important;
+    opacity: 0.75 !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.01em !important;
+  }
+
+  .date-nav-pill-btn.is-selected .pill-weekday {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .date-nav-pill-btn.is-selected .pill-daynumber {
+    color: #ffffff !important;
+  }
+
+  .date-nav-pill-btn.is-selected .pill-has-spend {
+    color: #ffffff !important;
+  }
+
+  .date-nav-pill-btn.is-selected .pill-zero-spend {
+    color: rgba(255, 255, 255, 0.85) !important;
+    opacity: 0.9 !important;
   }
 
   /* 7. Mobile KPI Grid Section (Comfortable & Fluid Typography) */
