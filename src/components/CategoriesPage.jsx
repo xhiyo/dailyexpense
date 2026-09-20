@@ -268,41 +268,68 @@ export const CategoriesPage = ({
         <>
           {/* Header Banner */}
           <div className="page-header-banner">
-            <div>
+            <div className="cat-header-info">
+              <div className="cat-header-nav-row">
+                <button
+                  type="button"
+                  className="cat-back-btn"
+                  onClick={onBackToDashboard}
+                  title={t('common.back')}
+                  aria-label={t('common.back')}
+                >
+                  <ArrowLeft size={16} />
+                  <span>{t('common.back')}</span>
+                </button>
+                <button
+                  type="button"
+                  className="cat-reset-btn"
+                  onClick={() => setShowResetConfirm(true)}
+                  title={t('categories.resetConfirmTitle')}
+                >
+                  <RotateCcw size={14} />
+                  <span>{t('categories.resetBtn')}</span>
+                </button>
+              </div>
               <h2 className="page-heading">{t('categories.pageTitle')}</h2>
               <p className="page-subheading">
                 {t('categories.pageSubtitle')}
               </p>
             </div>
-            <div className="cat-header-actions-strip">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={onBackToDashboard}
-              >
-                <ArrowLeft size={16} />
-                <span>{t('common.back')}</span>
-              </button>
 
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setShowResetConfirm(true)}
-                title={t('categories.resetConfirmTitle')}
-              >
-                <RotateCcw size={15} />
-                <span>{t('categories.resetBtn')}</span>
-              </button>
+            {/* Desktop Add Button (in header) */}
+            <button
+              type="button"
+              className="btn-add-category-primary cat-desktop-add-btn"
+              onClick={handleOpenAddForm}
+            >
+              <Plus size={16} />
+              <span>{t('categories.addBtn')}</span>
+            </button>
+          </div>
 
-              <button
-                type="button"
-                className="btn-primary"
-                onClick={handleOpenAddForm}
-              >
-                <Plus size={16} />
-                <span>{t('categories.addBtn')}</span>
-              </button>
-            </div>
+          {/* Primary Add Category Hero Button (Mobile & Desktop) */}
+          <div className="cat-add-hero-wrap">
+            <button
+              type="button"
+              className="btn-add-category-hero"
+              onClick={handleOpenAddForm}
+            >
+              <div className="add-hero-left">
+                <div className="add-hero-icon-circle">
+                  <Plus size={18} />
+                </div>
+                <div className="add-hero-text">
+                  <span className="add-hero-title">{t('categories.addBtn')}</span>
+                  <span className="add-hero-subtitle">
+                    {language === 'en' ? 'Create custom category with icon & color' : 'Buat kategori baru dengan ikon & warna khusus'}
+                  </span>
+                </div>
+              </div>
+              <div className="add-hero-badge">
+                <Sparkles size={14} />
+                <span>{language === 'en' ? 'New' : 'Baru'}</span>
+              </div>
+            </button>
           </div>
 
           {/* Quick Stats Meta Row */}

@@ -386,8 +386,9 @@ export const ChartsSection = ({
 
         {/* Interactive Selected Day Inspector Card */}
         {activeDayItem && (
-          <div className="analytics-active-day-card" key={activeDayItem.iso}>
-            <div className="active-day-left">
+          <div className="analytics-active-day-card">
+            {/* Top Row: Date & Actions */}
+            <div className="active-day-header-row">
               <div className="active-day-tag-wrap">
                 <span className={`active-day-tag ${activeDayItem.iso === todayISO ? 'is-today' : ''}`}>
                   {activeDayItem.iso === todayISO
@@ -395,9 +396,44 @@ export const ChartsSection = ({
                     : activeDayItem.weekday}
                 </span>
                 <span className="active-day-date-str">
-                  {activeDayItem.date.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {activeDayItem.date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
               </div>
+
+              <div className="active-day-actions">
+                {activeDayItem.iso !== todayISO && (
+                  <button
+                    type="button"
+                    className="active-day-back-today-btn"
+                    onClick={handleResetToToday}
+                    title={language === 'en' ? 'Return to Today' : 'Kembali ke Hari Ini'}
+                  >
+                    <RotateCcw size={12} />
+                    <span>{language === 'en' ? 'Today' : 'Hari Ini'}</span>
+                  </button>
+                )}
+
+                {onSelectDate && (
+                  <button
+                    type="button"
+                    className="active-day-jump-btn"
+                    onClick={() => {
+                      onSelectDate(activeDayItem.iso);
+                      const listEl = document.getElementById('expense-list-section') || document.querySelector('.modern-expense-section');
+                      if (listEl) {
+                        listEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                    title={language === 'en' ? 'View transactions for this date in the list above' : 'Buka daftar transaksi tanggal ini di atas'}
+                  >
+                    {t('charts.viewInList')} →
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Bottom Row: Spend Amount & Budget Pill */}
+            <div className="active-day-body-row">
               <div className="active-day-amount-wrap">
                 <strong className="active-day-amount font-mono">
                   {formatCurrency(activeDayItem.total, currency)}
@@ -408,54 +444,30 @@ export const ChartsSection = ({
                     : (language === 'en' ? '0 transactions' : '0 transaksi')}
                 </span>
               </div>
-            </div>
 
-            <div className="active-day-right">
-              {/* Back to Today quick action if another day is selected */}
-              {activeDayItem.iso !== todayISO && (
-                <button
-                  type="button"
-                  className="active-day-back-today-btn"
-                  onClick={handleResetToToday}
-                  title={language === 'en' ? 'Return to Today' : 'Kembali ke Hari Ini'}
-                >
-                  <RotateCcw size={12} />
-                  <span>{language === 'en' ? 'Today' : 'Hari Ini'}</span>
-                </button>
-              )}
-
-              {dailyBudget > 0 ? (
-                <div className={`active-day-budget-pill ${activeDayItem.isOverBudget ? 'is-over' : activeDayItem.total > 0 ? 'is-under' : 'is-zero'}`}>
-                  <span className={`budget-pill-dot ${activeDayItem.isOverBudget ? 'dot-danger' : activeDayItem.total > 0 ? 'dot-success' : 'dot-neutral'}`} />
-                  <span className="budget-pill-text">
-                    {activeDayItem.isOverBudget
-                      ? `${t('charts.overBudget')} (+${formatCurrency(activeDayItem.total - dailyBudget, currency)})`
-                      : activeDayItem.total > 0
-                        ? `${t('charts.withinBudget')} (${language === 'en' ? 'Rem.' : 'Sisa'} ${formatCurrency(dailyBudget - activeDayItem.total, currency)})`
+              <div className="active-day-status-wrap">
+                {dailyBudget > 0 ? (
+                  <div className={`active-day-budget-pill ${activeDayItem.isOverBudget ? 'is-over' : activeDayItem.total > 0 ? 'is-under' : 'is-zero'}`}>
+                    <span className={`budget-pill-dot ${activeDayItem.isOverBudget ? 'dot-danger' : activeDayItem.total > 0 ? 'dot-success' : 'dot-neutral'}`} />
+                    <span className="budget-pill-text">
+                      {activeDayItem.isOverBudget
+                        ? `${t('charts.overBudget')} (+${formatCurrency(activeDayItem.total - dailyBudget, currency)})`
+                        : activeDayItem.total > 0
+                          ? `${t('charts.withinBudget')} (${language === 'en' ? 'Rem.' : 'Sisa'} ${formatCurrency(dailyBudget - activeDayItem.total, currency)})`
+                          : t('charts.noExpenseDay')}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="active-day-budget-pill is-neutral">
+                    <span className="budget-pill-dot dot-neutral" />
+                    <span className="budget-pill-text">
+                      {activeDayItem.total > 0
+                        ? `${activeDayItem.count} ${t('common.transactions').toLowerCase()}`
                         : t('charts.noExpenseDay')}
-                  </span>
-                </div>
-              ) : (
-                <div className="active-day-budget-pill is-neutral">
-                  <span className="budget-pill-dot dot-neutral" />
-                  <span className="budget-pill-text">
-                    {activeDayItem.total > 0
-                      ? `${activeDayItem.count} ${t('common.transactions').toLowerCase()}`
-                      : t('charts.noExpenseDay')}
-                  </span>
-                </div>
-              )}
-
-              {onSelectDate && (
-                <button
-                  type="button"
-                  className="active-day-jump-btn"
-                  onClick={() => onSelectDate(activeDayItem.iso)}
-                  title={language === 'en' ? 'View transactions for this date in the list above' : 'Buka daftar transaksi tanggal ini di atas'}
-                >
-                  {t('charts.viewInList')} →
-                </button>
-              )}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

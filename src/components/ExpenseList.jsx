@@ -127,15 +127,26 @@ export const ExpenseList = ({
     return item.name;
   };
 
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+  const isSelectedToday = selectedDate === todayStr;
+
   return (
-    <section className="modern-expense-section">
+    <section className="modern-expense-section" id="expense-list-section">
       {/* Section Header with Action */}
       <div className="modern-section-header">
         <div className="section-heading-wrap">
           <h3 className="modern-section-title">
             {filterDateMode === 'all'
               ? (language === 'en' ? 'All Expense Records' : 'Semua Riwayat Transaksi')
-              : (language === 'en' ? 'Today\'s Transactions' : 'Daftar Transaksi Hari Ini')}
+              : isSelectedToday
+                ? (language === 'en' ? "Today's Transactions" : 'Daftar Transaksi Hari Ini')
+                : (language === 'en' ? 'Transactions on Selected Date' : 'Daftar Transaksi Tanggal Terpilih')}
           </h3>
           <span className="section-heading-meta">
             {filteredExpenses.length} {t('common.transactions').toLowerCase()} • Total: <strong className="font-mono">{formatCurrency(totalFilteredAmount, currency)}</strong>

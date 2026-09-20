@@ -98,7 +98,9 @@ export const DailySummaryCards = ({
       <div className="kpi-card kpi-card-hero">
         <div className="kpi-card-header">
           <span className="kpi-label">
-            {isToday ? t('summary.totalSpentToday') : `${t('date.selectedDate')} Spend`}
+            {isToday
+              ? t('summary.totalSpentToday')
+              : (language === 'en' ? 'Selected Date Spend' : 'Pengeluaran Tanggal Ini')}
           </span>
         </div>
         <div className="kpi-body">
