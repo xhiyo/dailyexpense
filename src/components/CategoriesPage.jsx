@@ -268,68 +268,42 @@ export const CategoriesPage = ({
         <>
           {/* Header Banner */}
           <div className="page-header-banner">
-            <div className="cat-header-info">
-              <div className="cat-header-nav-row">
-                <button
-                  type="button"
-                  className="cat-back-btn"
-                  onClick={onBackToDashboard}
-                  title={t('common.back')}
-                  aria-label={t('common.back')}
-                >
-                  <ArrowLeft size={16} />
-                  <span>{t('common.back')}</span>
-                </button>
-                <button
-                  type="button"
-                  className="cat-reset-btn"
-                  onClick={() => setShowResetConfirm(true)}
-                  title={t('categories.resetConfirmTitle')}
-                >
-                  <RotateCcw size={14} />
-                  <span>{t('categories.resetBtn')}</span>
-                </button>
-              </div>
+            <div className="page-header-left">
               <h2 className="page-heading">{t('categories.pageTitle')}</h2>
               <p className="page-subheading">
                 {t('categories.pageSubtitle')}
               </p>
             </div>
 
-            {/* Desktop Add Button (in header) */}
-            <button
-              type="button"
-              className="btn-add-category-primary cat-desktop-add-btn"
-              onClick={handleOpenAddForm}
-            >
-              <Plus size={16} />
-              <span>{t('categories.addBtn')}</span>
-            </button>
-          </div>
-
-          {/* Primary Add Category Hero Button (Mobile & Desktop) */}
-          <div className="cat-add-hero-wrap">
-            <button
-              type="button"
-              className="btn-add-category-hero"
-              onClick={handleOpenAddForm}
-            >
-              <div className="add-hero-left">
-                <div className="add-hero-icon-circle">
-                  <Plus size={18} />
-                </div>
-                <div className="add-hero-text">
-                  <span className="add-hero-title">{t('categories.addBtn')}</span>
-                  <span className="add-hero-subtitle">
-                    {language === 'en' ? 'Create custom category with icon & color' : 'Buat kategori baru dengan ikon & warna khusus'}
-                  </span>
-                </div>
-              </div>
-              <div className="add-hero-badge">
-                <Sparkles size={14} />
-                <span>{language === 'en' ? 'New' : 'Baru'}</span>
-              </div>
-            </button>
+            <div className="page-header-actions">
+              <button
+                type="button"
+                className="btn-secondary cat-header-back-btn"
+                onClick={onBackToDashboard}
+                title={t('common.back')}
+                aria-label={t('common.back')}
+              >
+                <ArrowLeft size={16} />
+                <span>{t('common.back')}</span>
+              </button>
+              <button
+                type="button"
+                className="btn-secondary cat-header-reset-btn"
+                onClick={() => setShowResetConfirm(true)}
+                title={t('categories.resetConfirmTitle')}
+              >
+                <RotateCcw size={14} />
+                <span>{t('categories.resetBtn')}</span>
+              </button>
+              <button
+                type="button"
+                className="btn-primary cat-header-add-btn"
+                onClick={handleOpenAddForm}
+              >
+                <Plus size={16} />
+                <span>{t('categories.addBtn')}</span>
+              </button>
+            </div>
           </div>
 
           {/* Quick Stats Meta Row */}
@@ -507,36 +481,28 @@ export const CategoriesPage = ({
         <form className="cat-page-editor" onSubmit={handleSubmitForm}>
           {/* Header Banner with Back Button */}
           <div className="page-header-banner">
-            <div className="cat-editor-title-wrap">
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={handleBackToList}
-              >
-                <ArrowLeft size={16} />
-                <span>Kembali ke Daftar</span>
-              </button>
-              <div>
-                <h2 className="page-heading">
-                  {editingId ? 'Ubah Kategori' : 'Tambah Kategori Baru'}
-                </h2>
-                <p className="page-subheading">
-                  {editingId
-                    ? 'Perubahan nama dan ikon akan diperbarui pada seluruh transaksi terkait'
-                    : 'Kategori baru siap langsung digunakan untuk mencatat pengeluaran'}
-                </p>
-              </div>
+            <div className="page-header-left">
+              <h2 className="page-heading">
+                {editingId ? 'Ubah Kategori' : 'Tambah Kategori Baru'}
+              </h2>
+              <p className="page-subheading">
+                {editingId
+                  ? 'Perubahan nama dan ikon akan diperbarui pada seluruh transaksi terkait'
+                  : 'Kategori baru siap langsung digunakan untuk mencatat pengeluaran'}
+              </p>
             </div>
 
-            <div className="cat-form-actions-top">
+            <div className="page-header-actions">
               <button
                 type="button"
-                className="btn-secondary"
+                className="btn-secondary cat-header-back-btn"
                 onClick={handleBackToList}
+                title={language === 'en' ? 'Back to List' : 'Kembali ke Daftar'}
               >
-                Batal
+                <ArrowLeft size={16} />
+                <span>{language === 'en' ? 'Back' : 'Kembali'}</span>
               </button>
-              <button type="submit" className="btn-primary">
+              <button type="submit" className="btn-primary cat-header-add-btn">
                 <Check size={16} />
                 <span>{editingId ? 'Simpan Perubahan' : 'Tambah Kategori'}</span>
               </button>

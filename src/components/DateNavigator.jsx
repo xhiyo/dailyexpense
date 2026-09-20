@@ -38,6 +38,8 @@ export const DateNavigator = ({
   // Refs for tracking prepending scroll adjustments without jitter
   const isPrependingRef = useRef(false);
   const prevScrollWidthRef = useRef(0);
+  const isProgrammaticScrollRef = useRef(false);
+  const hasInitialCenteredRef = useRef(false);
 
   // Mouse drag-to-scroll state for desktop
   const [isDragging, setIsDragging] = useState(false);
@@ -67,6 +69,7 @@ export const DateNavigator = ({
     if (diffDays < range.left - 5 || diffDays > range.right + 5) {
       setBaseDateStr(selectedDate);
       setRange({ left: -30, right: 30 });
+      hasInitialCenteredRef.current = false;
     }
   }, [selectedDate, baseDateStr, range.left, range.right]);
 
@@ -80,45 +83,81 @@ export const DateNavigator = ({
     }
   }, [range.left]);
 
-  // Auto-scroll the active date pill into center view smoothly
-  const scrollToActivePill = (behavior = 'smooth') => {
+  // Auto-scroll the active date pill into center view
+  const scrollToActivePill = useCallback((behavior = 'smooth') => {
     if (stripRef.current) {
       const activeEl = stripRef.current.querySelector('.date-nav-pill-btn.is-selected');
       if (activeEl) {
         const container = stripRef.current;
         const containerRect = container.getBoundingClientRect();
         const activeRect = activeEl.getBoundingClientRect();
+        if (containerRect.width === 0) return;
         const relativeLeft = activeRect.left - containerRect.left + container.scrollLeft;
         const scrollLeftTarget = relativeLeft - (container.clientWidth / 2) + (activeEl.clientWidth / 2);
+        
+        isProgrammaticScrollRef.current = true;
         container.scrollTo({
           left: Math.max(0, scrollLeftTarget),
           behavior
         });
+
+        if (behavior === 'smooth') {
+          setTimeout(() => {
+            isProgrammaticScrollRef.current = false;
+          }, 400);
+        } else {
+          isProgrammaticScrollRef.current = false;
+        }
       }
     }
-  };
+  }, []);
 
-  // Initial center scroll on mount or when selectedDate changes
+  // Instant center scroll on mount or when anchor changes, avoiding flash of August
+  useLayoutEffect(() => {
+    scrollToActivePill('auto');
+    hasInitialCenteredRef.current = true;
+  }, [selectedDate, baseDateStr, scrollToActivePill]);
+
+  // ResizeObserver to keep centered when element becomes visible or container resizes
   useEffect(() => {
+    if (!stripRef.current) return;
+    const container = stripRef.current;
+    
+    // Fallback timer in case layout wasn't ready on first tick
     const timer = setTimeout(() => {
-      scrollToActivePill('smooth');
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [selectedDate, baseDateStr]);
+      scrollToActivePill(hasInitialCenteredRef.current ? 'auto' : 'smooth');
+      hasInitialCenteredRef.current = true;
+    }, 40);
 
-  // Infinite scroll event listener
+    const ro = new ResizeObserver(() => {
+      if (!isDragging) {
+        scrollToActivePill('auto');
+      }
+    });
+    ro.observe(container);
+
+    return () => {
+      clearTimeout(timer);
+      ro.disconnect();
+    };
+  }, [selectedDate, baseDateStr, isDragging, scrollToActivePill]);
+
+  // Infinite scroll event listener: guarded against initial uncentered 0-scroll
   const handleScroll = () => {
     if (!stripRef.current) return;
+    if (!hasInitialCenteredRef.current) return;
+    if (isProgrammaticScrollRef.current) return;
+
     const { scrollLeft, scrollWidth, clientWidth } = stripRef.current;
 
-    // Near left edge (< 250px): prepend 20 days
-    if (scrollLeft < 250 && !isPrependingRef.current) {
+    // Near left edge (< 200px and has scrolled away from 0): prepend 20 days
+    if (scrollLeft > 20 && scrollLeft < 200 && !isPrependingRef.current) {
       prevScrollWidthRef.current = scrollWidth;
       isPrependingRef.current = true;
       setRange(prev => ({ ...prev, left: prev.left - 20 }));
     }
-    // Near right edge (< 250px from end): append 20 days
-    else if (scrollLeft + clientWidth > scrollWidth - 250) {
+    // Near right edge (< 200px from end): append 20 days
+    else if (scrollLeft + clientWidth > scrollWidth - 200) {
       setRange(prev => ({ ...prev, right: prev.right + 20 }));
     }
   };
