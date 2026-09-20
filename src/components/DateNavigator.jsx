@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, RotateCcw, Calendar } from 'lucide-react';
 import { formatCurrency, formatCalendarSpend } from '../utils/storage';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -129,16 +129,19 @@ export const DateNavigator = ({
       hasInitialCenteredRef.current = true;
     }, 40);
 
-    const ro = new ResizeObserver(() => {
-      if (!isDragging) {
-        scrollToActivePill('auto');
-      }
-    });
-    ro.observe(container);
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => {
+        if (!isDragging) {
+          scrollToActivePill('auto');
+        }
+      });
+      ro.observe(container);
+    }
 
     return () => {
       clearTimeout(timer);
-      ro.disconnect();
+      if (ro) ro.disconnect();
     };
   }, [selectedDate, baseDateStr, isDragging, scrollToActivePill]);
 
