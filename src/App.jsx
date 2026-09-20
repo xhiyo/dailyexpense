@@ -39,6 +39,7 @@ import { ExpenseList } from './components/ExpenseList';
 import { ChartsSection } from './components/ChartsSection';
 import { ExpenseModal } from './components/ExpenseModal';
 import { BudgetModal } from './components/BudgetModal';
+
 import { CategoriesPage } from './components/CategoriesPage';
 import { AuthModal } from './components/AuthModal';
 import { ProfilePage } from './components/ProfilePage';

@@ -146,10 +146,25 @@ export const ExpenseModal = ({
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal-content" ref={modalContentRef} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      onTouchMove={(e) => {
+        if (e.target === e.currentTarget) e.preventDefault();
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="modal-content"
+        ref={modalContentRef}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
-        <div className="modal-header">
+        <div
+          className="modal-header"
+          onTouchMove={(e) => e.stopPropagation()}
+        >
           <div>
             <h2 className="modal-title">
               {expenseToEdit ? t('modal.editTitle') : t('modal.addTitle')}

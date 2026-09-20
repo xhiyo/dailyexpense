@@ -83,6 +83,8 @@ export const DateNavigator = ({
     }
   }, [range.left]);
 
+  const userTappedPillRef = useRef(false);
+
   // Auto-scroll the active date pill into center view
   const scrollToActivePill = useCallback((behavior = 'smooth') => {
     if (stripRef.current) {
@@ -101,49 +103,57 @@ export const DateNavigator = ({
           behavior
         });
 
-        if (behavior === 'smooth') {
-          setTimeout(() => {
-            isProgrammaticScrollRef.current = false;
-          }, 400);
-        } else {
+        const resetDuration = behavior === 'smooth' ? 300 : 50;
+        setTimeout(() => {
           isProgrammaticScrollRef.current = false;
-        }
+        }, resetDuration);
       }
     }
   }, []);
 
-  // Instant center scroll on mount or when anchor changes, avoiding flash of August
-  useLayoutEffect(() => {
-    scrollToActivePill('auto');
-    hasInitialCenteredRef.current = true;
-  }, [selectedDate, baseDateStr, scrollToActivePill]);
-
-  // ResizeObserver to keep centered when element becomes visible or container resizes
+  // Center active date pill on initial mount once layout is ready
   useEffect(() => {
-    if (!stripRef.current) return;
-    const container = stripRef.current;
-    
-    // Fallback timer in case layout wasn't ready on first tick
-    const timer = setTimeout(() => {
-      scrollToActivePill(hasInitialCenteredRef.current ? 'auto' : 'smooth');
-      hasInitialCenteredRef.current = true;
-    }, 40);
+    if (!stripRef.current || hasInitialCenteredRef.current) return;
+
+    const centerPill = () => {
+      if (stripRef.current && stripRef.current.clientWidth > 0) {
+        scrollToActivePill('auto');
+        hasInitialCenteredRef.current = true;
+      }
+    };
+
+    centerPill();
 
     let ro = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
-        if (!isDragging) {
-          scrollToActivePill('auto');
+        if (!hasInitialCenteredRef.current) {
+          centerPill();
         }
       });
-      ro.observe(container);
+      ro.observe(stripRef.current);
     }
 
     return () => {
-      clearTimeout(timer);
       if (ro) ro.disconnect();
     };
-  }, [selectedDate, baseDateStr, isDragging, scrollToActivePill]);
+  }, [scrollToActivePill]);
+
+  // When selectedDate changes:
+  // If user tapped a pill in the strip, DO NOT scroll or jitter!
+  // If date was changed externally (arrows, today button, date picker), smoothly scroll it into view.
+  useEffect(() => {
+    if (!selectedDate) return;
+
+    if (userTappedPillRef.current) {
+      userTappedPillRef.current = false;
+      return;
+    }
+
+    if (hasInitialCenteredRef.current) {
+      scrollToActivePill('smooth');
+    }
+  }, [selectedDate, scrollToActivePill]);
 
   // Infinite scroll event listener: guarded against initial uncentered 0-scroll
   const handleScroll = () => {
@@ -336,6 +346,7 @@ export const DateNavigator = ({
               className={`date-nav-pill-btn ${day.isSelected ? 'is-selected' : ''} ${day.isToday ? 'is-today' : ''}`}
               onClick={() => {
                 if (hasDragged.current) return;
+                userTappedPillRef.current = true;
                 onSelectDate(day.iso);
               }}
               title={`${day.weekday}, ${day.dayNumber} - ${fullSpend}`}

@@ -1031,7 +1031,7 @@
   border-radius: var(--radius-lg);
   background: var(--bg-tertiary);
   border: 1px solid transparent;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -1039,7 +1039,6 @@
 .date-nav-pill-btn:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-subtle);
-  transform: translateY(-1px);
 }
 
 .date-nav-pill-btn.is-selected {
@@ -2149,7 +2148,7 @@
   transition: width 0.3s ease;
 }
 
-/* 8. Modals (Clean, Focused) */
+/* 8. Modals (Clean, Focused, Native PWA Feel) */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -2160,6 +2159,9 @@
   justify-content: center;
   z-index: 1000;
   padding: 16px;
+  touch-action: none;
+  overscroll-behavior: none;
+  overflow: hidden;
 }
 
 .modal-content {
@@ -2171,6 +2173,10 @@
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
 }
@@ -2181,6 +2187,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .modal-title {
@@ -2214,24 +2223,30 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  touch-action: pan-y;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .field-label {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .form-input,
 .select-input,
 .form-textarea {
   width: 100%;
+  min-width: 0;
   height: 42px;
   padding: 0 14px;
   border-radius: var(--radius-md);
@@ -6676,9 +6691,14 @@ select.expense-input {
   /* 5. Mobile Bottom Sheet Transforms for ALL Dialog Modals */
   .modal-overlay,
   .auth-overlay,
-  .auth-modal-overlay {
+  .auth-modal-overlay,
+  .install-modal-overlay,
+  .mobile-sheet-overlay {
     align-items: flex-end !important;
     padding: 0 !important;
+    touch-action: none !important;
+    overscroll-behavior: none !important;
+    overflow: hidden !important;
   }
 
   .modal-content,
@@ -6688,7 +6708,8 @@ select.expense-input {
   .export-fixed-card,
   .install-modal-card,
   .modal-people-manager,
-  .modal-category-manager {
+  .modal-category-manager,
+  .mobile-sheet-content {
     border-radius: 24px 24px 0 0 !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -6696,6 +6717,10 @@ select.expense-input {
     border-bottom: none !important;
     animation: mobileModalSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
     padding-bottom: env(safe-area-inset-bottom, 14px) !important;
+    overscroll-behavior: contain !important;
+    touch-action: pan-y !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   @keyframes mobileModalSlideUp {
@@ -6842,11 +6867,16 @@ select.expense-input {
     justify-content: space-between !important;
     box-sizing: border-box !important;
     gap: 0 !important;
-    transition: transform var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast) !important;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease !important;
+  }
+
+  .date-nav-pill-btn:hover {
+    transform: none !important;
   }
 
   .date-nav-pill-btn:active {
-    transform: scale(0.96) !important;
+    transform: none !important;
+    opacity: 0.85 !important;
   }
 
   .pill-weekday {
