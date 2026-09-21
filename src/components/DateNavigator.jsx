@@ -32,8 +32,9 @@ export const DateNavigator = ({
 
   // Base anchor date for the range
   const [baseDateStr, setBaseDateStr] = useState(selectedDate || todayStr);
-  // Range offset: days relative to baseDateStr (initially 30 days past and 30 days future = 61 days)
-  const [range, setRange] = useState({ left: -30, right: 30 });
+  // Generous range offset: 90 days in the past and 60 days in future (151 days total)
+  // This avoids infinite prepending layout shifts during normal mobile swipe browsing.
+  const [range, setRange] = useState({ left: -90, right: 60 });
 
   // Refs for tracking prepending scroll adjustments without jitter
   const isPrependingRef = useRef(false);
@@ -41,11 +42,14 @@ export const DateNavigator = ({
   const isProgrammaticScrollRef = useRef(false);
   const hasInitialCenteredRef = useRef(false);
 
-  // Mouse drag-to-scroll state for desktop
+  // Mouse & Touch drag tracking state
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
+  const dragStartY = useRef(0);
   const dragScrollLeft = useRef(0);
   const hasDragged = useRef(false);
+  const lastDragEndTime = useRef(0);
+  const touchActive = useRef(false);
 
   // Fast O(1) expense lookup map
   const expenseMap = useMemo(() => {
@@ -58,20 +62,47 @@ export const DateNavigator = ({
     return map;
   }, [expenses]);
 
-  // If selectedDate changes from outside (e.g. date picker or analytics jump)
-  // Check if it's within current range; if not, re-anchor baseDate
+  // Auto-scroll the active date pill into center view
+  const scrollToActivePill = useCallback((behavior = 'smooth') => {
+    if (stripRef.current) {
+      const activeEl = stripRef.current.querySelector('.date-nav-pill-btn.is-selected');
+      if (activeEl) {
+        const container = stripRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const activeRect = activeEl.getBoundingClientRect();
+        if (containerRect.width === 0) return;
+        const relativeLeft = activeRect.left - containerRect.left + container.scrollLeft;
+        const scrollLeftTarget = relativeLeft - (container.clientWidth / 2) + (activeEl.clientWidth / 2);
+
+        isProgrammaticScrollRef.current = true;
+        container.scrollTo({
+          left: Math.max(0, scrollLeftTarget),
+          behavior
+        });
+
+        const resetDuration = behavior === 'smooth' ? 450 : 60;
+        setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+        }, resetDuration);
+      }
+    }
+  }, []);
+
+  // If selectedDate changes from outside and is far outside the current range: re-anchor
   useEffect(() => {
     if (!selectedDate) return;
     const base = parseLocalDate(baseDateStr);
     const sel = parseLocalDate(selectedDate);
     const diffDays = Math.round((sel - base) / (1000 * 60 * 60 * 24));
 
-    if (diffDays < range.left - 5 || diffDays > range.right + 5) {
+    if (diffDays < range.left - 10 || diffDays > range.right + 10) {
       setBaseDateStr(selectedDate);
-      setRange({ left: -30, right: 30 });
-      hasInitialCenteredRef.current = false;
+      setRange({ left: -90, right: 60 });
+      requestAnimationFrame(() => {
+        scrollToActivePill('auto');
+      });
     }
-  }, [selectedDate, baseDateStr, range.left, range.right]);
+  }, [selectedDate, baseDateStr, range.left, range.right, scrollToActivePill]);
 
   // Adjust scroll position after prepending items to left
   useLayoutEffect(() => {
@@ -84,32 +115,6 @@ export const DateNavigator = ({
   }, [range.left]);
 
   const userTappedPillRef = useRef(false);
-
-  // Auto-scroll the active date pill into center view
-  const scrollToActivePill = useCallback((behavior = 'smooth') => {
-    if (stripRef.current) {
-      const activeEl = stripRef.current.querySelector('.date-nav-pill-btn.is-selected');
-      if (activeEl) {
-        const container = stripRef.current;
-        const containerRect = container.getBoundingClientRect();
-        const activeRect = activeEl.getBoundingClientRect();
-        if (containerRect.width === 0) return;
-        const relativeLeft = activeRect.left - containerRect.left + container.scrollLeft;
-        const scrollLeftTarget = relativeLeft - (container.clientWidth / 2) + (activeEl.clientWidth / 2);
-        
-        isProgrammaticScrollRef.current = true;
-        container.scrollTo({
-          left: Math.max(0, scrollLeftTarget),
-          behavior
-        });
-
-        const resetDuration = behavior === 'smooth' ? 300 : 50;
-        setTimeout(() => {
-          isProgrammaticScrollRef.current = false;
-        }, resetDuration);
-      }
-    }
-  }, []);
 
   // Center active date pill on initial mount once layout is ready
   useEffect(() => {
@@ -140,7 +145,7 @@ export const DateNavigator = ({
   }, [scrollToActivePill]);
 
   // When selectedDate changes:
-  // If user tapped a pill in the strip, DO NOT scroll or jitter!
+  // If user tapped a pill in the strip, DO NOT force-scroll or jitter!
   // If date was changed externally (arrows, today button, date picker), smoothly scroll it into view.
   useEffect(() => {
     if (!selectedDate) return;
@@ -155,29 +160,71 @@ export const DateNavigator = ({
     }
   }, [selectedDate, scrollToActivePill]);
 
-  // Infinite scroll event listener: guarded against initial uncentered 0-scroll
+  // Infinite scroll event listener: safely append/prepend when user is near edge and NOT touching
   const handleScroll = () => {
     if (!stripRef.current) return;
     if (!hasInitialCenteredRef.current) return;
     if (isProgrammaticScrollRef.current) return;
+    // CRITICAL: NEVER prepend/append while user has their finger down or is dragging!
+    if (touchActive.current || isDragging) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = stripRef.current;
 
-    // Near left edge (< 200px and has scrolled away from 0): prepend 20 days
-    if (scrollLeft > 20 && scrollLeft < 200 && !isPrependingRef.current) {
+    // Near left edge (< 100px and has scrolled away from 0): prepend 30 days
+    if (scrollLeft > 10 && scrollLeft < 100 && !isPrependingRef.current) {
       prevScrollWidthRef.current = scrollWidth;
       isPrependingRef.current = true;
-      setRange(prev => ({ ...prev, left: prev.left - 20 }));
+      setRange(prev => ({ ...prev, left: prev.left - 30 }));
     }
-    // Near right edge (< 200px from end): append 20 days
-    else if (scrollLeft + clientWidth > scrollWidth - 200) {
-      setRange(prev => ({ ...prev, right: prev.right + 20 }));
+    // Near right edge (< 100px from end): append 30 days
+    else if (scrollLeft + clientWidth > scrollWidth - 100) {
+      setRange(prev => ({ ...prev, right: prev.right + 30 }));
     }
   };
 
-  // Mouse drag-to-scroll handlers
-  const handleMouseDown = (e) => {
+  // Touch gesture handlers for mobile: Prevents swipes/scrolls from accidentally clicking pills!
+  const handleTouchStart = (e) => {
     if (!stripRef.current) return;
+    touchActive.current = true;
+    const touch = e.touches[0];
+    dragStartX.current = touch.clientX;
+    dragStartY.current = touch.clientY;
+    dragScrollLeft.current = stripRef.current.scrollLeft;
+    hasDragged.current = false;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchActive.current || !stripRef.current) return;
+    const touch = e.touches[0];
+    const diffX = Math.abs(touch.clientX - dragStartX.current);
+    const diffY = Math.abs(touch.clientY - dragStartY.current);
+
+    // If movement exceeds 6px (swipe or page scroll), mark as dragged!
+    if (diffX > 6 || diffY > 6) {
+      hasDragged.current = true;
+      lastDragEndTime.current = Date.now();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchActive.current = false;
+    if (hasDragged.current) {
+      lastDragEndTime.current = Date.now();
+      // Keep hasDragged true for 350ms to swallow delayed synthetic clicks
+      setTimeout(() => {
+        hasDragged.current = false;
+      }, 350);
+    }
+  };
+
+  const handleTouchCancel = () => {
+    touchActive.current = false;
+    hasDragged.current = false;
+  };
+
+  // Mouse drag-to-scroll handlers for desktop
+  const handleMouseDown = (e) => {
+    if (e.button !== 0 || !stripRef.current) return;
     setIsDragging(true);
     dragStartX.current = e.pageX - stripRef.current.offsetLeft;
     dragScrollLeft.current = stripRef.current.scrollLeft;
@@ -187,19 +234,73 @@ export const DateNavigator = ({
   const handleMouseMove = (e) => {
     if (!isDragging || !stripRef.current) return;
     const x = e.pageX - stripRef.current.offsetLeft;
-    const walk = (x - dragStartX.current) * 1.5;
-    if (Math.abs(walk) > 4) {
+    const walk = (x - dragStartX.current) * 1.4;
+    if (Math.abs(walk) > 6) {
       hasDragged.current = true;
+      lastDragEndTime.current = Date.now();
     }
     stripRef.current.scrollLeft = dragScrollLeft.current - walk;
   };
 
   const handleMouseUp = () => {
-    setIsDragging(false);
+    if (isDragging) {
+      setIsDragging(false);
+      if (hasDragged.current) {
+        lastDragEndTime.current = Date.now();
+        setTimeout(() => {
+          hasDragged.current = false;
+        }, 350);
+      }
+    }
   };
 
   const handleMouseLeave = () => {
-    setIsDragging(false);
+    if (isDragging) {
+      setIsDragging(false);
+      if (hasDragged.current) {
+        lastDragEndTime.current = Date.now();
+        setTimeout(() => {
+          hasDragged.current = false;
+        }, 350);
+      }
+    }
+  };
+
+  // Handle deliberate tap on a date pill
+  const handlePillClick = (e, dayIso) => {
+    // If the user just swiped or scrolled, BLOCK CLICK completely!
+    if (hasDragged.current || (Date.now() - lastDragEndTime.current < 350)) {
+      e.preventDefault();
+      return;
+    }
+
+    if (dayIso === selectedDate) {
+      userTappedPillRef.current = false;
+      return;
+    }
+
+    userTappedPillRef.current = true;
+    onSelectDate(dayIso);
+
+    // If pill is near or partially cut off by screen edge, gently nudge it into view
+    const targetPill = e.currentTarget;
+    if (stripRef.current && targetPill) {
+      const containerRect = stripRef.current.getBoundingClientRect();
+      const pillRect = targetPill.getBoundingClientRect();
+      const edgeThreshold = 28;
+
+      if (pillRect.left < containerRect.left + edgeThreshold) {
+        stripRef.current.scrollBy({
+          left: pillRect.left - containerRect.left - edgeThreshold,
+          behavior: 'smooth'
+        });
+      } else if (pillRect.right > containerRect.right - edgeThreshold) {
+        stripRef.current.scrollBy({
+          left: pillRect.right - containerRect.right + edgeThreshold,
+          behavior: 'smooth'
+        });
+      }
+    }
   };
 
   const handleShiftDay = (delta) => {
@@ -326,11 +427,15 @@ export const DateNavigator = ({
         </div>
       </div>
 
-      {/* Unlimited Continuous Sliding Pill Strip */}
+      {/* Smooth Sliding Pill Strip */}
       <div
         className={`date-nav-pill-strip ${isDragging ? 'is-dragging' : ''}`}
         ref={stripRef}
         onScroll={handleScroll}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -344,11 +449,7 @@ export const DateNavigator = ({
               key={day.iso}
               type="button"
               className={`date-nav-pill-btn ${day.isSelected ? 'is-selected' : ''} ${day.isToday ? 'is-today' : ''}`}
-              onClick={() => {
-                if (hasDragged.current) return;
-                userTappedPillRef.current = true;
-                onSelectDate(day.iso);
-              }}
+              onClick={(e) => handlePillClick(e, day.iso)}
               title={`${day.weekday}, ${day.dayNumber} - ${fullSpend}`}
             >
               <span className="pill-weekday">{day.weekday}</span>
