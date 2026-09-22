@@ -2787,6 +2787,235 @@ select.expense-input {
   width: 100%;
 }
 
+/* ==========================================================================
+   Expense Modal: Touch-Friendly Native-Style Date & Time Selector
+   ========================================================================== */
+.modal-datetime-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.modal-datetime-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-datetime-quick-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.modal-dt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal-dt-chip:hover {
+  color: var(--accent-primary);
+  border-color: var(--border-medium);
+  background: var(--bg-tertiary);
+}
+
+.modal-dt-chip.active {
+  color: var(--accent-primary);
+  background: var(--accent-subtle);
+  border-color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.modal-dt-chip-now {
+  color: var(--text-muted);
+}
+
+.modal-dt-chip-now:hover,
+.modal-dt-chip-now:active {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: var(--accent-subtle);
+}
+
+.modal-datetime-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.modal-dt-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+.modal-dt-card:hover {
+  border-color: var(--border-medium);
+  background: var(--bg-tertiary);
+}
+
+.modal-dt-card:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.modal-dt-card.input-error {
+  border-color: var(--color-danger) !important;
+}
+
+.modal-dt-card-icon-wrap {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--accent-subtle, rgba(37, 99, 235, 0.08));
+  color: var(--accent-primary, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-dt-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.modal-dt-card-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.modal-dt-card-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.modal-dt-card-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+}
+
+.modal-dt-card-val {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-dt-hidden-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+}
+
+.modal-dt-hidden-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .modal-datetime-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .modal-dt-card {
+    min-height: 50px;
+    padding: 7px 10px;
+    gap: 8px;
+  }
+
+  .modal-dt-card-icon-wrap {
+    width: 30px;
+    height: 30px;
+  }
+
+  .modal-dt-card-val {
+    font-size: 0.8rem;
+  }
+
+  .modal-datetime-quick-chips {
+    gap: 4px;
+  }
+
+  .modal-dt-chip {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 350px) {
+  .modal-datetime-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
 /* Pinned Bottom Footer (Always Visible at Bottom, Never Cut Off) */
 .expense-modal-bottom-footer {
   padding: 14px 22px 16px;

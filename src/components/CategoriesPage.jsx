@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Tag,
   Plus,
@@ -205,7 +205,9 @@ export const CategoriesPage = ({
   const confirmDeleteCategory = () => {
     if (!categoryToDelete) return;
     if (categories.length <= 1) {
-      alert('Minimal harus ada 1 kategori aktif dalam aplikasi.');
+      if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        window.alert('Minimal harus ada 1 kategori aktif dalam aplikasi.');
+      }
       setCategoryToDelete(null);
       return;
     }
