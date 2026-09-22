@@ -57,7 +57,15 @@ export const CategoriesPage = ({
   onBackToDashboard
 }) => {
   const { t, language, localizeCategoryName } = useTranslation();
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   // View mode: 'list' | 'form'
   const [view, setView] = useState('list');
   const [editingId, setEditingId] = useState(null);
@@ -293,7 +301,7 @@ export const CategoriesPage = ({
                 title={t('categories.resetConfirmTitle')}
               >
                 <RotateCcw size={14} />
-                <span>{t('categories.resetBtn')}</span>
+                <span>{isMobile ? (language === 'en' ? 'Reset' : 'Reset') : t('categories.resetBtn')}</span>
               </button>
               <button
                 type="button"
@@ -301,7 +309,7 @@ export const CategoriesPage = ({
                 onClick={handleOpenAddForm}
               >
                 <Plus size={16} />
-                <span>{t('categories.addBtn')}</span>
+                <span>{isMobile ? (language === 'en' ? 'Tambah' : 'Tambah') : t('categories.addBtn')}</span>
               </button>
             </div>
           </div>
@@ -504,7 +512,7 @@ export const CategoriesPage = ({
               </button>
               <button type="submit" className="btn-primary cat-header-add-btn">
                 <Check size={16} />
-                <span>{editingId ? 'Simpan Perubahan' : 'Tambah Kategori'}</span>
+                <span>{isMobile ? (editingId ? (language === 'en' ? 'Save' : 'Simpan') : (language === 'en' ? 'Tambah' : 'Tambah')) : (editingId ? 'Simpan Perubahan' : 'Tambah Kategori')}</span>
               </button>
             </div>
           </div>
@@ -513,11 +521,11 @@ export const CategoriesPage = ({
           <div className="cat-editor-grid">
             {/* Column 1: Metadata & Color */}
             <div className="cat-editor-card">
-              <div className="profile-card-header">
+              <div className="cat-card-header">
                 <div className="profile-card-header-icon">
                   <Tag size={18} />
                 </div>
-                <div>
+                <div className="cat-card-header-info">
                   <h4 className="profile-card-title">Informasi Dasar Kategori</h4>
                   <p className="profile-card-desc">Tentukan nama dan warna pengenal kategori</p>
                 </div>
@@ -631,11 +639,11 @@ export const CategoriesPage = ({
 
             {/* Column 2: Icon Picker */}
             <div className="cat-editor-card">
-              <div className="profile-card-header">
+              <div className="cat-card-header">
                 <div className="profile-card-header-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#d97706' }}>
                   <Sparkles size={18} />
                 </div>
-                <div>
+                <div className="cat-card-header-info">
                   <h4 className="profile-card-title">Pilih Ikon Kategori</h4>
                   <p className="profile-card-desc">Gunakan emoji atau simbol vektor yang sesuai</p>
                 </div>
