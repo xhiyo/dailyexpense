@@ -168,21 +168,20 @@ input, select, textarea {
   border: none;
 }
 
-/* Custom Clean Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Native Mobile App Experience:
+   Hide all web scrollbars globally while keeping full scrolling capability (touch, wheel, drag) */
+html,
+body,
+#root,
+* {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE & Edge */
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-medium);
-  border-radius: var(--radius-full);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Edge, Android WebView */
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }

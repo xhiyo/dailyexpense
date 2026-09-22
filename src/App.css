@@ -28,7 +28,15 @@
   min-width: 0;
   height: 100vh;
   overflow-y: auto;
-  scrollbar-gutter: stable;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-main-viewport::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .main-content {
@@ -1903,7 +1911,14 @@
   overscroll-behavior-x: contain;
   touch-action: pan-x;
   cursor: grab;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modern-bar-chart-container::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .modern-bar-chart-container.is-dragging {
@@ -2483,21 +2498,15 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-medium) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .expense-modal-scroll-body::-webkit-scrollbar {
-  width: 5px;
-}
-
-.expense-modal-scroll-body::-webkit-scrollbar-thumb {
-  background: var(--border-medium);
-  border-radius: 4px;
-}
-
-.expense-modal-scroll-body::-webkit-scrollbar-track {
-  background: transparent;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /* Amount Hero Card (Fintech Style) */
@@ -3564,16 +3573,14 @@ select.expense-input {
   height: 200px;
   max-height: 200px;
   overflow-y: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .cat-icons-surface::-webkit-scrollbar {
-  width: 5px;
-}
-
-.cat-icons-surface::-webkit-scrollbar-thumb {
-  background: var(--border-medium);
-  border-radius: var(--radius-full);
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .cat-icons-grid {
