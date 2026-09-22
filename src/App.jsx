@@ -100,6 +100,16 @@ function App() {
   const activeUserId = currentUser?.id || 'guest';
   const loadedUserIdRef = useRef(activeUserId);
 
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Auto-sync user profiles on load
   useEffect(() => {
     syncAllLocalUsersToFirestore();
@@ -924,25 +934,27 @@ function App() {
 
         {/* Main Content Viewport */}
         <div className="app-main-viewport">
-          {/* Topbar Header */}
-          <Header
-            onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
-            onOpenMenu={() => setIsMobileMenuOpen(true)}
-            activeTab={activeTab}
-            totalSpendToday={totalSpendToday}
-            currency={currency}
-            currentUser={currentUser}
-            onOpenProfile={() => {
-              if (!currentUser) {
-                handleOpenLogin();
-                return;
-              }
-              navigateTo('profile');
-            }}
-            onOpenAuthModal={handleOpenLogin}
-            theme={theme}
-            toggleTheme={toggleTheme}
-          />
+          {/* Topbar Header (hidden on mobile inside settings to match native mobile settings page) */}
+          {!(isMobile && activeTab === 'settings') && (
+            <Header
+              onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
+              onOpenMenu={() => navigateTo('settings')}
+              activeTab={activeTab}
+              totalSpendToday={totalSpendToday}
+              currency={currency}
+              currentUser={currentUser}
+              onOpenProfile={() => {
+                if (!currentUser) {
+                  handleOpenLogin();
+                  return;
+                }
+                navigateTo('profile');
+              }}
+              onOpenAuthModal={handleOpenLogin}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            />
+          )}
 
           {/* Main Website Content Body */}
           <main className="main-content">
@@ -1046,6 +1058,8 @@ function App() {
                 onSyncToCloud={currentUser ? handleSyncToCloud : undefined}
                 onBackToDashboard={() => navigateTo('dashboard')}
                 onOpenCookieSettings={() => setIsCookieBannerOpen(true)}
+                isMobile={isMobile}
+                onSelectTab={navigateTo}
               />
             )}
 
@@ -1111,7 +1125,7 @@ function App() {
         onSelectTab={navigateTo}
         onOpenAddExpense={handleOpenAddExpense}
         unreadTransactionsCount={unreadTransactionsCount}
-        onOpenMenu={() => setIsMobileMenuOpen(true)}
+        onOpenMenu={() => navigateTo('settings')}
         isMenuOpen={isMobileMenuOpen}
       />
 

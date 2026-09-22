@@ -78,11 +78,11 @@ export const MobileBottomNav = ({
           <span className="mobile-nav-label">{t('nav.categories')}</span>
         </button>
 
-        {/* Tab 5: Menu / Akun (Opens Mobile Menu Sheet) */}
+        {/* Tab 5: Menu / Settings */}
         <button
           type="button"
-          className={`mobile-nav-item ${isMenuOpen || activeTab === 'settings' || activeTab === 'profile' ? 'is-active' : ''}`}
-          onClick={onOpenMenu}
+          className={`mobile-nav-item ${activeTab === 'settings' ? 'is-active' : ''}`}
+          onClick={() => onSelectTab('settings')}
           aria-label={t('nav.menu')}
         >
           <div className="mobile-nav-icon-wrap">

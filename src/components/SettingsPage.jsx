@@ -1,5 +1,22 @@
-import React, { useState } from 'react';
-import { Check, FileSpreadsheet, CloudUpload, CloudDownload, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Check,
+  FileSpreadsheet,
+  CloudUpload,
+  CloudDownload,
+  RefreshCw,
+  Target,
+  Moon,
+  Sun,
+  Bell,
+  ArrowLeftRight,
+  Trash2,
+  ChevronRight,
+  Globe,
+  LogOut,
+  User,
+  X
+} from 'lucide-react';
 import { CURRENCIES, getBudgetPresets, convertCurrencyAmount } from '../data/categories';
 import { formatCurrency, ACCENT_COLORS } from '../utils/storage';
 import { UserAvatar } from './UserAvatar';
@@ -22,11 +39,51 @@ export const SettingsPage = ({
   onResetData,
   onSyncToCloud,
   onBackToDashboard,
-  onOpenCookieSettings
+  onOpenCookieSettings,
+  isMobile: isMobileProp,
+  onSelectTab
 }) => {
   const { t, language, setLanguage } = useTranslation();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
   const [syncStatus, setSyncStatus] = useState(null); // null | 'syncing' | 'done' | 'error'
+
+  const [isMobileLocal, setIsMobileLocal] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileLocal(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = isMobileProp !== undefined ? isMobileProp : isMobileLocal;
+
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('spendwise_notifications');
+      return saved !== null ? saved === 'true' : true;
+    }
+    return true;
+  });
+
+  const handleToggleNotifications = async () => {
+    const next = !notificationsEnabled;
+    setNotificationsEnabled(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('spendwise_notifications', String(next));
+      if (next && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        try {
+          await Notification.requestPermission();
+        } catch {
+          // ignore
+        }
+      }
+    }
+  };
+
+  const currentCurrencyObj = CURRENCIES.find((c) => c.symbol === currency) || CURRENCIES[0];
 
   const handleSyncNow = async () => {
     if (!onSyncToCloud) return;
@@ -45,6 +102,322 @@ export const SettingsPage = ({
     onResetData();
     setShowResetConfirm(false);
   };
+
+  // Dedicated Native Mobile Layout (Matching user screenshot)
+  if (isMobile) {
+    return (
+      <div className="mobile-settings-view">
+        {/* Header (Exact typography & layout from user screenshot) */}
+        <div className="mobile-settings-header">
+          <h1 className="mobile-settings-title">{language === 'en' ? 'Settings' : 'Pengaturan'}</h1>
+          <p className="mobile-settings-subtitle">{language === 'en' ? 'Manage your preferences' : 'Kelola preferensi Anda'}</p>
+        </div>
+
+        {/* User Account Tile (If logged in, show user row. If guest, show sign-in prompt) */}
+        {currentUser ? (
+          <div
+            className="mobile-settings-user-card"
+            onClick={() => onSelectTab && onSelectTab('profile')}
+            role="button"
+            tabIndex={0}
+          >
+            <UserAvatar user={currentUser} size={42} />
+            <div className="mobile-user-details">
+              <span className="mobile-user-name">{currentUser.name}</span>
+              <span className="mobile-user-email">{currentUser.email || 'Personal Account'}</span>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </div>
+        ) : (
+          <div
+            className="mobile-settings-guest-card"
+            onClick={onOpenAuthModal}
+            role="button"
+            tabIndex={0}
+          >
+            <div className="mobile-guest-left">
+              <div className="mobile-guest-icon-box">
+                <User size={18} />
+              </div>
+              <div className="mobile-guest-text">
+                <span className="mobile-guest-title">{language === 'en' ? 'Sign In / Register' : 'Masuk / Daftar Akun'}</span>
+                <span className="mobile-guest-sub">{language === 'en' ? 'Sync expenses across devices' : 'Sinkronkan data dengan aman'}</span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </div>
+        )}
+
+        {/* Main Grouped List Card (From User Screenshot) */}
+        <div className="mobile-settings-card">
+          {/* Row 1: Daily Limit */}
+          <button
+            type="button"
+            className="mobile-settings-row"
+            onClick={onOpenBudgetModal}
+            aria-label={language === 'en' ? 'Daily Limit' : 'Batas Limit Harian'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-target">
+                <Target size={20} />
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title">{language === 'en' ? 'Daily Limit' : 'Batas Limit'}</span>
+                <span className="mobile-row-desc font-mono">
+                  {dailyBudget > 0 ? formatCurrency(dailyBudget, currency) : (language === 'en' ? 'No limit set' : 'Tanpa batas')}
+                </span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </button>
+
+          {/* Row 2: Dark Mode */}
+          <button
+            type="button"
+            className="mobile-settings-row"
+            onClick={toggleTheme}
+            aria-label={language === 'en' ? 'Dark Mode' : 'Mode Gelap'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-moon">
+                {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title">{language === 'en' ? 'Dark Mode' : 'Mode Gelap'}</span>
+                <span className="mobile-row-desc">
+                  {theme === 'dark' ? (language === 'en' ? 'On' : 'Aktif') : (language === 'en' ? 'Off' : 'Mati')}
+                </span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </button>
+
+          {/* Row 3: Notifications */}
+          <button
+            type="button"
+            className="mobile-settings-row"
+            onClick={handleToggleNotifications}
+            aria-label={language === 'en' ? 'Notifications' : 'Notifikasi'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-bell">
+                <Bell size={20} />
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title">{language === 'en' ? 'Notifications' : 'Notifikasi'}</span>
+                <span className="mobile-row-desc">
+                  {notificationsEnabled ? (language === 'en' ? 'Enabled' : 'Aktif') : (language === 'en' ? 'Disabled' : 'Mati')}
+                </span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </button>
+
+          {/* Row 4: Currency */}
+          <button
+            type="button"
+            className="mobile-settings-row"
+            onClick={() => setShowCurrencyPicker(true)}
+            aria-label={language === 'en' ? 'Currency' : 'Mata Uang'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-currency">
+                <ArrowLeftRight size={20} />
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title">{language === 'en' ? 'Currency' : 'Mata Uang'}</span>
+                <span className="mobile-row-desc">
+                  {currentCurrencyObj ? `${currentCurrencyObj.code} (${currentCurrencyObj.name})` : currency}
+                </span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </button>
+
+          {/* Row 5: Export Data */}
+          <button
+            type="button"
+            className="mobile-settings-row"
+            onClick={onExportCSV}
+            aria-label={language === 'en' ? 'Export Data' : 'Ekspor Data'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-export">
+                <FileSpreadsheet size={20} />
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title">{language === 'en' ? 'Export Data' : 'Ekspor Data'}</span>
+                <span className="mobile-row-desc">CSV / Excel</span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </button>
+
+          {/* Row 6: Clear All Data */}
+          <button
+            type="button"
+            className="mobile-settings-row row-danger"
+            onClick={() => setShowResetConfirm(true)}
+            aria-label={language === 'en' ? 'Clear All Data' : 'Hapus Semua Data'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-trash">
+                <Trash2 size={20} />
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title text-danger">{language === 'en' ? 'Clear All Data' : 'Hapus Semua Data'}</span>
+                <span className="mobile-row-desc">{language === 'en' ? 'Delete history' : 'Hapus riwayat'}</span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </button>
+        </div>
+
+        {/* Secondary Preferences Card */}
+        <div className="mobile-settings-card">
+          {/* Language Switcher */}
+          <button
+            type="button"
+            className="mobile-settings-row"
+            onClick={() => setLanguage(language === 'en' ? 'id' : 'en')}
+            aria-label={language === 'en' ? 'Language' : 'Bahasa'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-purple">
+                <Globe size={20} />
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title">{language === 'en' ? 'Language' : 'Bahasa'}</span>
+                <span className="mobile-row-desc">
+                  {language === 'en' ? 'English (US)' : 'Bahasa Indonesia'}
+                </span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="mobile-lang-chip">{language.toUpperCase()}</span>
+              <ChevronRight size={18} className="mobile-row-chevron" />
+            </div>
+          </button>
+
+          {/* Cloud Sync Status (if logged in) */}
+          {currentUser && onSyncToCloud && (
+            <button
+              type="button"
+              className="mobile-settings-row"
+              onClick={handleSyncNow}
+              disabled={syncStatus === 'syncing'}
+              aria-label={language === 'en' ? 'Cloud Sync' : 'Sinkronisasi Cloud'}
+            >
+              <div className="mobile-row-left">
+                <div className="mobile-row-icon-box box-blue">
+                  <RefreshCw size={20} className={syncStatus === 'syncing' ? 'spin-icon' : ''} />
+                </div>
+                <div className="mobile-row-text">
+                  <span className="mobile-row-title">{language === 'en' ? 'Cloud Sync' : 'Sinkronisasi Cloud'}</span>
+                  <span className="mobile-row-desc">
+                    {syncStatus === 'syncing'
+                      ? (language === 'en' ? 'Syncing...' : 'Menyinkronkan...')
+                      : syncStatus === 'done'
+                      ? (language === 'en' ? 'All Synced!' : 'Semua Tersinkron!')
+                      : (language === 'en' ? 'Auto-sync connected' : 'Sinkronisasi aktif')}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight size={18} className="mobile-row-chevron" />
+            </button>
+          )}
+        </div>
+
+        {/* Logout Row (if logged in) */}
+        {currentUser && (
+          <button
+            type="button"
+            className="mobile-settings-logout-btn"
+            onClick={onLogout}
+          >
+            <LogOut size={17} />
+            <span>{language === 'en' ? 'Log Out' : 'Keluar Akun'} ({currentUser.name?.split(' ')[0]})</span>
+          </button>
+        )}
+
+        {/* Currency Bottom Modal Sheet */}
+        {showCurrencyPicker && (
+          <div className="mobile-picker-overlay" onClick={() => setShowCurrencyPicker(false)}>
+            <div className="mobile-picker-sheet animate-slideUp" onClick={(e) => e.stopPropagation()}>
+              <div className="mobile-picker-header">
+                <h3 className="mobile-picker-title">{language === 'en' ? 'Select Currency' : 'Pilih Mata Uang'}</h3>
+                <button
+                  type="button"
+                  className="mobile-picker-close"
+                  onClick={() => setShowCurrencyPicker(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="mobile-picker-list">
+                {CURRENCIES.map((c) => {
+                  const isSelected = currency === c.symbol;
+                  return (
+                    <button
+                      key={c.code}
+                      type="button"
+                      className={`mobile-picker-item ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => {
+                        onUpdateCurrency(c.symbol);
+                        setShowCurrencyPicker(false);
+                      }}
+                    >
+                      <div className="picker-item-left">
+                        <span className="picker-item-symbol font-mono">{c.symbol}</span>
+                        <div className="picker-item-info">
+                          <strong className="picker-item-code">{c.code}</strong>
+                          <span className="picker-item-name">{c.name}</span>
+                        </div>
+                      </div>
+                      {isSelected && <Check size={18} className="picker-item-check" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reset Confirmation Modal */}
+        {showResetConfirm && (
+          <div className="mobile-picker-overlay" onClick={() => setShowResetConfirm(false)}>
+            <div className="mobile-confirm-modal animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+              <div className="mobile-confirm-icon-box">
+                <Trash2 size={24} color="#ef4444" />
+              </div>
+              <h3 className="mobile-confirm-title">{language === 'en' ? 'Clear All Data?' : 'Hapus Semua Data?'}</h3>
+              <p className="mobile-confirm-desc">
+                {language === 'en'
+                  ? 'This action will permanently delete all stored expense records from this device.'
+                  : 'Tindakan ini akan menghapus semua riwayat catatan pengeluaran dari perangkat ini.'}
+              </p>
+              <div className="mobile-confirm-actions">
+                <button
+                  type="button"
+                  className="btn-secondary mobile-confirm-cancel"
+                  onClick={() => setShowResetConfirm(false)}
+                >
+                  {language === 'en' ? 'Cancel' : 'Batal'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-danger-solid mobile-confirm-delete"
+                  onClick={handleConfirmReset}
+                >
+                  {language === 'en' ? 'Delete History' : 'Hapus Riwayat'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="tab-settings-view">

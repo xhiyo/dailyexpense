@@ -26,17 +26,6 @@ export const ExpenseModal = ({
   };
 
   const todayStr = useMemo(() => formatToISO(new Date()), []);
-  const yesterdayStr = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return formatToISO(d);
-  }, []);
-
-  const parseLocalDate = (dateStr) => {
-    if (!dateStr) return new Date();
-    const parts = dateStr.split('-');
-    return new Date(parts[0], parts[1] - 1, parts[2]);
-  };
 
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
@@ -48,8 +37,6 @@ export const ExpenseModal = ({
   const [errors, setErrors] = useState({});
   const [showAllCategories, setShowAllCategories] = useState(false);
   const modalContentRef = useRef(null);
-  const dateInputRef = useRef(null);
-  const timeInputRef = useRef(null);
   const [isMobile, setIsMobile] = useState(
     typeof window !== 'undefined' ? window.innerWidth <= 768 : false
   );
@@ -105,76 +92,6 @@ export const ExpenseModal = ({
     }
     setErrors({});
   }, [expenseToEdit, defaultDate, isOpen, categories, currency, isRupiah, todayStr]);
-
-  const formattedDateDisplay = useMemo(() => {
-    if (!date) return { full: t('modal.fieldDate'), badge: null };
-    const locale = language === 'en' ? 'en-US' : 'id-ID';
-    const d = parseLocalDate(date);
-    const dayName = d.toLocaleDateString(locale, { weekday: 'short' });
-    const dateFormatted = d.toLocaleDateString(locale, {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-
-    if (date === todayStr) {
-      return {
-        full: `${dayName}, ${dateFormatted}`,
-        badge: t('date.today')
-      };
-    }
-    if (date === yesterdayStr) {
-      return {
-        full: `${dayName}, ${dateFormatted}`,
-        badge: t('date.yesterday')
-      };
-    }
-    return {
-      full: `${dayName}, ${dateFormatted}`,
-      badge: null
-    };
-  }, [date, todayStr, yesterdayStr, language, t]);
-
-  const handleSetToday = () => {
-    setDate(todayStr);
-    if (errors.date) setErrors((prev) => ({ ...prev, date: null }));
-  };
-
-  const handleSetYesterday = () => {
-    setDate(yesterdayStr);
-    if (errors.date) setErrors((prev) => ({ ...prev, date: null }));
-  };
-
-  const handleSetNow = () => {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mm = String(now.getMinutes()).padStart(2, '0');
-    setTime(`${hh}:${mm}`);
-  };
-
-  const handleOpenDatePicker = () => {
-    if (dateInputRef.current) {
-      if (typeof dateInputRef.current.showPicker === 'function') {
-        try {
-          dateInputRef.current.showPicker();
-          return;
-        } catch {}
-      }
-      dateInputRef.current.focus();
-    }
-  };
-
-  const handleOpenTimePicker = () => {
-    if (timeInputRef.current) {
-      if (typeof timeInputRef.current.showPicker === 'function') {
-        try {
-          timeInputRef.current.showPicker();
-          return;
-        } catch {}
-      }
-      timeInputRef.current.focus();
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -418,115 +335,39 @@ export const ExpenseModal = ({
             </div>
           </div>
 
-          {/* 4. Date & Time Section (Fintech Touch-Friendly Cards + Quick Chips) */}
-          <div className="modal-datetime-section">
-            <div className="modal-datetime-header">
-              <span className="field-label">
+          {/* 4. Date & Time (Clean, Native Mobile 2-Column Row) */}
+          <div className="expense-datetime-row">
+            <div className="form-group">
+              <label className="field-label" htmlFor="expense-date">
                 <Calendar size={13} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                {language === 'en' ? 'Date & Time' : 'Tanggal & Waktu'}
-              </span>
-
-              {/* Quick shortcut chips: Today, Yesterday, Now */}
-              <div className="modal-datetime-quick-chips">
-                <button
-                  type="button"
-                  className={`modal-dt-chip ${date === todayStr ? 'active' : ''}`}
-                  onClick={handleSetToday}
-                >
-                  {t('date.today')}
-                </button>
-                <button
-                  type="button"
-                  className={`modal-dt-chip ${date === yesterdayStr ? 'active' : ''}`}
-                  onClick={handleSetYesterday}
-                >
-                  {t('date.yesterday')}
-                </button>
-                <button
-                  type="button"
-                  className="modal-dt-chip modal-dt-chip-now"
-                  onClick={handleSetNow}
-                  title={language === 'en' ? 'Set to current time' : 'Atur ke waktu sekarang'}
-                >
-                  <Clock size={11} />
-                  <span>{language === 'en' ? 'Now' : 'Sekarang'}</span>
-                </button>
-              </div>
+                {t('modal.fieldDate')}
+              </label>
+              <input
+                id="expense-date"
+                type="date"
+                className={`form-input expense-date-input ${errors.date ? 'input-error' : ''}`}
+                value={date}
+                onChange={(e) => {
+                  setDate(e.target.value);
+                  if (errors.date) setErrors(prev => ({ ...prev, date: null }));
+                }}
+              />
+              {errors.date && <span className="field-error-msg">{errors.date}</span>}
             </div>
 
-            <div className="modal-datetime-grid">
-              {/* Date Card */}
-              <div
-                className={`modal-dt-card ${errors.date ? 'input-error' : ''}`}
-                onClick={handleOpenDatePicker}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleOpenDatePicker()}
-              >
-                <div className="modal-dt-card-icon-wrap">
-                  <Calendar size={16} className="modal-dt-card-icon" />
-                </div>
-                <div className="modal-dt-card-content">
-                  <div className="modal-dt-card-top">
-                    <span className="modal-dt-card-label">{t('modal.fieldDate')}</span>
-                    {formattedDateDisplay.badge && (
-                      <span className="modal-dt-card-badge">{formattedDateDisplay.badge}</span>
-                    )}
-                  </div>
-                  <span className="modal-dt-card-val font-mono">
-                    {formattedDateDisplay.full}
-                  </span>
-                </div>
-
-                <input
-                  ref={dateInputRef}
-                  id="expense-date"
-                  type="date"
-                  className="modal-dt-hidden-input"
-                  value={date}
-                  onChange={(e) => {
-                    setDate(e.target.value);
-                    if (errors.date) setErrors((prev) => ({ ...prev, date: null }));
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  aria-label={t('modal.fieldDate')}
-                />
-              </div>
-
-              {/* Time Card */}
-              <div
-                className="modal-dt-card"
-                onClick={handleOpenTimePicker}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleOpenTimePicker()}
-              >
-                <div className="modal-dt-card-icon-wrap">
-                  <Clock size={16} className="modal-dt-card-icon" />
-                </div>
-                <div className="modal-dt-card-content">
-                  <div className="modal-dt-card-top">
-                    <span className="modal-dt-card-label">{language === 'en' ? 'Time' : 'Waktu'}</span>
-                  </div>
-                  <span className="modal-dt-card-val font-mono">
-                    {time || '--:--'}
-                  </span>
-                </div>
-
-                <input
-                  ref={timeInputRef}
-                  id="expense-time"
-                  type="time"
-                  className="modal-dt-hidden-input"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  aria-label={language === 'en' ? 'Time' : 'Waktu'}
-                />
-              </div>
+            <div className="form-group">
+              <label className="field-label" htmlFor="expense-time">
+                <Clock size={13} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                {language === 'en' ? 'Time' : 'Waktu'}
+              </label>
+              <input
+                id="expense-time"
+                type="time"
+                className="form-input expense-time-input"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+              />
             </div>
-
-            {errors.date && <span className="field-error-msg">{errors.date}</span>}
           </div>
 
           {/* 5. Payment Method */}
