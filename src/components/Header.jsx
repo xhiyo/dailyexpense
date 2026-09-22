@@ -61,7 +61,9 @@ export const Header = ({
               <SpendWiseLogo size={28} />
               <div className="mobile-brand-text">
                 <span className="mobile-app-name">SpendWise</span>
-                <span className="mobile-app-page-tag">{getPageTitle()}</span>
+                {activeTab && activeTab !== 'dashboard' && (
+                  <span className="mobile-app-page-tag">{getPageTitle()}</span>
+                )}
               </div>
             </div>
           </div>
