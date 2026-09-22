@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import {
-  Calendar,
   SlidersHorizontal,
   TrendingUp,
   PieChart,
@@ -109,41 +108,29 @@ export const DailySummaryCards = ({
     <section className="summary-cards-wrapper">
       {/* 1. MOBILE HERO WALLET CARD (Fintech Neobank Design for Mobile Screens) */}
       <div className="mobile-wallet-card">
-        {/* Top bar of wallet card */}
+        {/* Top bar of wallet card: Clean caption on left, simplified icon button on right */}
         <div className="wallet-card-header">
-          <div className="wallet-date-badge">
-            <Calendar size={13} className="wallet-badge-icon" />
-            <span className="wallet-date-text">
-              {isToday
-                ? t('summary.totalSpentToday')
-                : selectedDateObject.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}
-            </span>
-            <span className="wallet-dot">•</span>
-            <span className="wallet-tx-count">
-              {transactionCount} {t('common.transactions').toLowerCase()}
-            </span>
-          </div>
+          <span className="wallet-spend-caption">
+            {isToday
+              ? (language === 'en' ? "Today's Total Expense" : 'Total Keluar Hari Ini')
+              : (language === 'en' ? 'Date Expense' : 'Pengeluaran Tanggal Ini')}
+          </span>
 
           {onOpenBudgetModal && (
             <button
               type="button"
-              className="wallet-budget-btn"
+              className="wallet-budget-icon-btn"
               onClick={onOpenBudgetModal}
               aria-label={hasBudget ? t('settings.editLimitBtn') : t('settings.setLimitBtn')}
+              title={hasBudget ? t('settings.editLimitBtn') : t('settings.setLimitBtn')}
             >
-              <SlidersHorizontal size={12} />
-              <span>{hasBudget ? t('settings.editLimitBtn') : t('settings.setLimitBtn')}</span>
+              <SlidersHorizontal size={17} />
             </button>
           )}
         </div>
 
         {/* Main Spend Amount Display */}
         <div className="wallet-main-display">
-          <span className="wallet-spend-caption">
-            {isToday
-              ? (language === 'en' ? "Today's Total Expense" : 'Total Keluar Hari Ini')
-              : (language === 'en' ? 'Date Expense' : 'Pengeluaran Tanggal Ini')}
-          </span>
           <div className="wallet-spend-amount font-mono">
             {formatCurrency(totalSpent, currency)}
           </div>

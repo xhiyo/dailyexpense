@@ -1002,6 +1002,7 @@
 
 /* 7-Day Pill Strip: Equal 66px Heights Across All 7 Days */
 .date-nav-pill-strip {
+  position: relative;
   display: flex;
   overflow-x: auto;
   scroll-snap-type: none;
@@ -6840,6 +6841,7 @@ select.expense-input {
   }
 
   .date-nav-pill-strip {
+    position: relative !important;
     display: flex !important;
     overflow-x: auto !important;
     scroll-snap-type: none !important;
@@ -6962,27 +6964,19 @@ select.expense-input {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
-    background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-secondary) 100%) !important;
+    background: var(--bg-card) !important;
     border: 1px solid var(--border-subtle) !important;
     border-radius: 20px !important;
-    padding: 14px 16px 14px !important;
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    padding: 16px 16px 14px !important;
+    box-shadow: var(--shadow-sm) !important;
     position: relative !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
-    gap: 10px !important;
+    gap: 8px !important;
   }
 
   .mobile-wallet-card::before {
-    content: '';
-    position: absolute;
-    top: -40px;
-    right: -40px;
-    width: 120px;
-    height: 120px;
-    background: radial-gradient(circle, var(--accent-glow, rgba(37, 99, 235, 0.16)) 0%, transparent 70%);
-    pointer-events: none;
-    border-radius: 50%;
+    display: none !important;
   }
 
   .wallet-card-header {
@@ -6990,65 +6984,32 @@ select.expense-input {
     align-items: center !important;
     justify-content: space-between !important;
     width: 100% !important;
-    gap: 8px !important;
+    min-height: 28px !important;
   }
 
-  .wallet-date-badge {
+  .wallet-budget-icon-btn {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 6px !important;
-    background: var(--bg-tertiary) !important;
-    border: 1px solid var(--border-subtle) !important;
-    padding: 4px 10px !important;
-    border-radius: 999px !important;
-    font-size: 0.72rem !important;
-    font-weight: 600 !important;
-    color: var(--text-secondary) !important;
-    min-width: 0 !important;
-  }
-
-  .wallet-badge-icon {
-    color: var(--accent-primary) !important;
-    flex-shrink: 0 !important;
-  }
-
-  .wallet-date-text {
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-
-  .wallet-dot {
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     color: var(--text-muted) !important;
-    font-size: 0.6rem !important;
-    flex-shrink: 0 !important;
-  }
-
-  .wallet-tx-count {
-    color: var(--text-muted) !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-  }
-
-  .wallet-budget-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    background: var(--bg-tertiary) !important;
-    border: 1px solid var(--border-subtle) !important;
-    color: var(--accent-primary) !important;
-    font-size: 0.72rem !important;
-    font-weight: 600 !important;
-    padding: 4px 10px !important;
-    border-radius: 999px !important;
     cursor: pointer !important;
-    flex-shrink: 0 !important;
-    transition: all 0.15s ease !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+    transition: color 0.15s ease, transform 0.15s ease !important;
   }
 
-  .wallet-budget-btn:active {
-    transform: scale(0.96) !important;
-    background: var(--bg-card-hover) !important;
+  .wallet-budget-icon-btn:hover {
+    color: var(--accent-primary) !important;
+  }
+
+  .wallet-budget-icon-btn:active {
+    transform: scale(0.92) !important;
+    color: var(--accent-primary) !important;
   }
 
   .wallet-main-display {
