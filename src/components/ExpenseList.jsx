@@ -58,6 +58,26 @@ export const ExpenseList = ({
     return '--:--';
   };
 
+  const getDayName = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return '';
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    const locale = language === 'en' ? 'en-US' : 'id-ID';
+    return d.toLocaleDateString(locale, { weekday: 'long' });
+  };
+
+  const formatExpenseDateWithDay = (dateStr) => {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return '';
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    const locale = language === 'en' ? 'en-US' : 'id-ID';
+    const day = d.toLocaleDateString(locale, { weekday: 'short' });
+    const formatted = d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+    return `${day}, ${formatted}`;
+  };
+
   // Filter & sort expenses
   const filteredExpenses = useMemo(() => {
     let list = expenses;
@@ -286,8 +306,13 @@ export const ExpenseList = ({
                   </div>
 
                   <div className="tx-sub-row">
+                    <span className="tx-day-label">
+                      {filterDateMode === 'all' || expense.date !== selectedDate
+                        ? formatExpenseDateWithDay(expense.date)
+                        : getDayName(expense.date)}
+                    </span>
+                    <span className="tx-bullet">•</span>
                     <span className="tx-time">
-                      {expense.date !== selectedDate ? `${expense.date} • ` : ''}
                       {getExpenseDisplayTime(expense)}
                     </span>
                     <span className="tx-bullet">•</span>

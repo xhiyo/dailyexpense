@@ -8,7 +8,6 @@ import {
   Target,
   Moon,
   Sun,
-  Bell,
   ArrowLeftRight,
   Trash2,
   ChevronRight,
@@ -59,29 +58,6 @@ export const SettingsPage = ({
   }, []);
 
   const isMobile = isMobileProp !== undefined ? isMobileProp : isMobileLocal;
-
-  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('spendwise_notifications');
-      return saved !== null ? saved === 'true' : true;
-    }
-    return true;
-  });
-
-  const handleToggleNotifications = async () => {
-    const next = !notificationsEnabled;
-    setNotificationsEnabled(next);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('spendwise_notifications', String(next));
-      if (next && 'Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-        try {
-          await Notification.requestPermission();
-        } catch {
-          // ignore
-        }
-      }
-    }
-  };
 
   const currentCurrencyObj = CURRENCIES.find((c) => c.symbol === currency) || CURRENCIES[0];
 
@@ -192,26 +168,6 @@ export const SettingsPage = ({
             <ChevronRight size={18} className="mobile-row-chevron" />
           </button>
 
-          {/* Row 3: Notifications */}
-          <button
-            type="button"
-            className="mobile-settings-row"
-            onClick={handleToggleNotifications}
-            aria-label={language === 'en' ? 'Notifications' : 'Notifikasi'}
-          >
-            <div className="mobile-row-left">
-              <div className="mobile-row-icon-box box-bell">
-                <Bell size={20} />
-              </div>
-              <div className="mobile-row-text">
-                <span className="mobile-row-title">{language === 'en' ? 'Notifications' : 'Notifikasi'}</span>
-                <span className="mobile-row-desc">
-                  {notificationsEnabled ? (language === 'en' ? 'Enabled' : 'Aktif') : (language === 'en' ? 'Disabled' : 'Mati')}
-                </span>
-              </div>
-            </div>
-            <ChevronRight size={18} className="mobile-row-chevron" />
-          </button>
 
           {/* Row 4: Currency */}
           <button

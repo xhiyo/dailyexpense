@@ -1376,6 +1376,12 @@
   text-overflow: ellipsis;
 }
 
+.tx-day-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
 .tx-bullet {
   opacity: 0.5;
 }
@@ -2857,7 +2863,7 @@ select.expense-input {
   width: 100%;
   max-width: 540px;
   margin: 0 auto;
-  padding: 16px 16px 110px;
+  padding: 4px 0 32px;
   box-sizing: border-box;
   animation: fadeIn 0.2s ease-out;
 }
@@ -6682,27 +6688,40 @@ select.expense-input {
     padding: 2px;
   }
 
-  /* 2. Main Content Safe Padding & Native Viewport Locking */
+  /* 2. Main Content Safe Padding & Fluid Native Scrolling */
+  html,
+  body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: auto !important;
+  }
+
   .app-layout {
     display: block !important;
     min-height: 100vh !important;
+    height: auto !important;
     width: 100% !important;
     max-width: 100vw !important;
     overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
-    touch-action: pan-y !important;
+    overflow-y: visible !important;
+    touch-action: auto !important;
   }
 
   .app-main-viewport {
     width: 100% !important;
     max-width: 100vw !important;
     min-width: 0 !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: visible !important;
     overflow-x: hidden !important;
-    overscroll-behavior-x: none !important;
+    -webkit-overflow-scrolling: touch !important;
   }
 
   .main-content {
-    padding: 12px 12px calc(76px + env(safe-area-inset-bottom, 16px)) !important;
+    padding: 12px 14px calc(76px + env(safe-area-inset-bottom, 16px)) !important;
     max-width: 100vw !important;
     width: 100% !important;
     overflow-x: hidden !important;
@@ -6715,6 +6734,7 @@ select.expense-input {
     max-width: 100% !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
+    gap: 16px !important;
   }
 
   /* 3. Mobile Bottom Navigation Bar */
@@ -7346,9 +7366,12 @@ select.expense-input {
 
   /* 6. Mobile Date Strip & Controls */
   .modern-date-nav-wrapper {
-    padding: 10px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 2px 0 6px !important;
     gap: 8px !important;
-    border-radius: var(--radius-md, 12px) !important;
+    border-radius: 0 !important;
   }
 
   .date-nav-topbar {
@@ -7798,22 +7821,29 @@ select.expense-input {
 
   /* 8. Mobile Transaction Feed Touch Adjustments */
   .modern-expense-section {
-    border-radius: var(--radius-md, 12px) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
   }
 
   .modern-section-header {
-    padding: 12px 12px !important;
+    background: transparent !important;
+    padding: 6px 0 10px !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 4px !important;
   }
 
   .modern-section-title {
-    font-size: 0.98rem !important;
+    font-size: 1.02rem !important;
+    font-weight: 700 !important;
   }
 
   .section-heading-meta {
-    font-size: 0.74rem !important;
+    font-size: 0.76rem !important;
     line-height: 1.3 !important;
   }
 
@@ -7822,7 +7852,9 @@ select.expense-input {
   }
 
   .modern-toolbar {
-    padding: 10px 12px !important;
+    background: transparent !important;
+    border-bottom: none !important;
+    padding: 6px 0 10px !important;
     flex-direction: column !important;
     gap: 8px !important;
     align-items: stretch !important;
@@ -7863,7 +7895,12 @@ select.expense-input {
 
   /* Responsive Grid-area for Transactions on Mobile */
   .modern-transaction-list {
-    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 6px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
   }
 
   .modern-transaction-item {
@@ -7874,7 +7911,11 @@ select.expense-input {
       "dot details actions" !important;
     align-items: center !important;
     gap: 3px 8px !important;
-    padding: 10px 12px !important;
+    padding: 11px 12px !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
   }
 
   .tx-indicator-cell {
@@ -7924,6 +7965,12 @@ select.expense-input {
     white-space: normal !important;
   }
 
+  .tx-day-label {
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    margin-right: 2px !important;
+  }
+
   .tx-amount-col {
     grid-area: amount !important;
     text-align: right !important;
@@ -7968,8 +8015,11 @@ select.expense-input {
 
   /* 9. Analytics & Charts Section on Mobile */
   .modern-analytics-section {
-    border-radius: var(--radius-md, 12px) !important;
-    padding: 12px 10px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 6px 0 !important;
     gap: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
