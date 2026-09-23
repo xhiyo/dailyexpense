@@ -6777,18 +6777,6 @@ select.expense-input {
     -webkit-transform: translateZ(0);
   }
 
-  /* Seamless bottom extension for overscroll bounce so no gap/box appears beneath bottom nav */
-  .mobile-bottom-nav::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 100vh;
-    background: var(--bg-card);
-    pointer-events: none;
-  }
-
   .mobile-bottom-nav-inner {
     display: flex;
     align-items: center;
