@@ -6714,7 +6714,9 @@ select.expense-input {
     min-height: 100% !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: auto !important;
     touch-action: auto !important;
+    background-color: var(--bg-primary) !important;
   }
 
   .app-layout {
@@ -6773,6 +6775,18 @@ select.expense-input {
     padding-bottom: env(safe-area-inset-bottom, 0px);
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
+  }
+
+  /* Seamless bottom extension for overscroll bounce so no gap/box appears beneath bottom nav */
+  .mobile-bottom-nav::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    background: var(--bg-card);
+    pointer-events: none;
   }
 
   .mobile-bottom-nav-inner {

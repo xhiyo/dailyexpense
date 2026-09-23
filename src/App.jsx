@@ -428,6 +428,11 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
     saveTheme(theme);
 
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f172a' : '#f8fafc');
+    }
+
     const activeAccent = ACCENT_COLORS.find(
       (c) => c.hex.toLowerCase() === (accentColor || '').toLowerCase()
     ) || ACCENT_COLORS[0];
