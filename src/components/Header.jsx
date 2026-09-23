@@ -37,6 +37,8 @@ export const Header = ({
         return t('settings.pageTitle');
       case 'profile':
         return t('profile.pageTitle');
+      case 'analytics':
+        return t('charts.title');
       default:
         return t('nav.dashboard');
     }

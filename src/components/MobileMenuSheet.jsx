@@ -13,7 +13,8 @@ import {
   Check,
   ChevronRight,
   Globe,
-  Smartphone
+  Smartphone,
+  BarChart3
 } from 'lucide-react';
 import { UserAvatar } from './UserAvatar';
 import { formatCurrency } from '../utils/storage';
@@ -178,6 +179,24 @@ export const MobileMenuSheet = ({
 
           {/* Navigation Action Tiles */}
           <div className="mobile-action-tiles">
+            {/* Analisis Pengeluaran */}
+            <button
+              type="button"
+              className="mobile-tile-btn"
+              onClick={() => handleNavigate('analytics')}
+            >
+              <div className="mobile-tile-icon-box tile-analytics">
+                <BarChart3 size={18} />
+              </div>
+              <div className="mobile-tile-content">
+                <span className="mobile-tile-label">{language === 'en' ? 'Spending Analytics' : 'Analisis Pengeluaran'}</span>
+                <span className="mobile-tile-sub">
+                  {language === 'en' ? 'Trends & category breakdown' : 'Grafik tren & statistik'}
+                </span>
+              </div>
+              <ChevronRight size={16} className="mobile-tile-arrow" />
+            </button>
+
             {/* Profil */}
             <button
               type="button"

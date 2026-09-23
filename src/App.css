@@ -48,7 +48,8 @@
 }
 
 /* Dashboard Tab: Uniform 24px Spacing Between All Sections */
-.tab-dashboard-view {
+.tab-dashboard-view,
+.tab-analytics-view {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -3108,6 +3109,24 @@ select.expense-input {
 [data-theme='dark'] .box-blue {
   background: rgba(37, 99, 235, 0.2);
   color: #60a5fa;
+}
+
+.box-analytics {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+[data-theme='dark'] .box-analytics {
+  background: rgba(124, 58, 237, 0.2);
+  color: #a78bfa;
+}
+
+.tile-analytics {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+[data-theme='dark'] .tile-analytics {
+  background: rgba(124, 58, 237, 0.2);
+  color: #a78bfa;
 }
 
 .mobile-row-text {
@@ -6729,7 +6748,8 @@ select.expense-input {
   }
 
   .tab-dashboard-view,
-  .tab-transactions-view {
+  .tab-transactions-view,
+  .tab-analytics-view {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: hidden !important;

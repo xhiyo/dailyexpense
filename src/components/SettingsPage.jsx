@@ -14,7 +14,8 @@ import {
   Globe,
   LogOut,
   User,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
 import { CURRENCIES, getBudgetPresets, convertCurrencyAmount } from '../data/categories';
 import { formatCurrency, ACCENT_COLORS } from '../utils/storage';
@@ -126,7 +127,28 @@ export const SettingsPage = ({
 
         {/* Main Grouped List Card (From User Screenshot) */}
         <div className="mobile-settings-card">
-          {/* Row 1: Daily Limit */}
+          {/* Row 1: Spending Analytics (Khusus mobile halaman sendiri) */}
+          <button
+            type="button"
+            className="mobile-settings-row"
+            onClick={() => onSelectTab && onSelectTab('analytics')}
+            aria-label={language === 'en' ? 'Spending Analytics' : 'Analisis Pengeluaran'}
+          >
+            <div className="mobile-row-left">
+              <div className="mobile-row-icon-box box-analytics">
+                <BarChart3 size={20} />
+              </div>
+              <div className="mobile-row-text">
+                <span className="mobile-row-title">{language === 'en' ? 'Spending Analytics' : 'Analisis Pengeluaran'}</span>
+                <span className="mobile-row-desc">
+                  {language === 'en' ? 'Spending trends & breakdown' : 'Grafik tren & statistik pengeluaran'}
+                </span>
+              </div>
+            </div>
+            <ChevronRight size={18} className="mobile-row-chevron" />
+          </button>
+
+          {/* Row 2: Daily Limit */}
           <button
             type="button"
             className="mobile-settings-row"

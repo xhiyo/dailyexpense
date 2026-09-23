@@ -81,7 +81,7 @@ export const MobileBottomNav = ({
         {/* Tab 5: Menu / Settings */}
         <button
           type="button"
-          className={`mobile-nav-item ${activeTab === 'settings' ? 'is-active' : ''}`}
+          className={`mobile-nav-item ${(activeTab === 'settings' || activeTab === 'analytics') ? 'is-active' : ''}`}
           onClick={() => onSelectTab('settings')}
           aria-label={t('nav.menu')}
         >

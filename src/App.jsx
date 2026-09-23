@@ -41,6 +41,7 @@ import { ExpenseModal } from './components/ExpenseModal';
 import { BudgetModal } from './components/BudgetModal';
 
 import { CategoriesPage } from './components/CategoriesPage';
+import { AnalyticsPage } from './components/AnalyticsPage';
 import { AuthModal } from './components/AuthModal';
 import { ProfilePage } from './components/ProfilePage';
 import { SettingsPage } from './components/SettingsPage';
@@ -67,7 +68,8 @@ const ROUTE_PATHS = {
   transactions: '/transactions',
   categories: '/categories',
   profile: '/profile',
-  settings: '/settings'
+  settings: '/settings',
+  analytics: '/analytics'
 };
 
 const getRouteFromPathname = (pathname) => {
@@ -79,6 +81,7 @@ const getRouteFromPathname = (pathname) => {
   if (norm === '/categories' || norm === '/kategori') return 'categories';
   if (norm === '/profile' || norm === '/profil') return 'profile';
   if (norm === '/settings' || norm === '/pengaturan') return 'settings';
+  if (norm === '/analytics' || norm === '/analisis' || norm === '/charts' || norm === '/grafik') return 'analytics';
   return 'dashboard';
 };
 
@@ -1025,15 +1028,17 @@ function App() {
                   onOpenAddModal={handleOpenAddExpense}
                 />
 
-                {/* 4. Grafik Tren & Kategori */}
-                <ChartsSection
-                  expenses={expenses}
-                  selectedDate={selectedDate}
-                  dailyBudget={dailyBudget}
-                  currency={currency}
-                  categories={categories}
-                  onSelectDate={setSelectedDate}
-                />
+                {/* 4. Grafik Tren & Kategori (Hanya desktop di dashboard. Khusus mobile dibuat halaman tersendiri di menu) */}
+                {!isMobile && (
+                  <ChartsSection
+                    expenses={expenses}
+                    selectedDate={selectedDate}
+                    dailyBudget={dailyBudget}
+                    currency={currency}
+                    categories={categories}
+                    onSelectDate={setSelectedDate}
+                  />
+                )}
               </div>
             )}
 
@@ -1138,6 +1143,21 @@ function App() {
                 onResetCategories={handleResetCategories}
                 expenses={expenses}
                 onBackToDashboard={() => navigateTo('dashboard')}
+              />
+            )}
+
+            {/* TAB 6: DEDICATED SPENDING ANALYTICS PAGE (KHUSUS MOBILE DI MENU / ROUTE /ANALYTICS) */}
+            {activeTab === 'analytics' && (
+              <AnalyticsPage
+                expenses={expenses}
+                selectedDate={selectedDate}
+                dailyBudget={dailyBudget}
+                currency={currency}
+                categories={categories}
+                onSelectDate={setSelectedDate}
+                onBack={() => navigateTo('settings')}
+                onBackToDashboard={() => navigateTo('dashboard')}
+                isMobile={isMobile}
               />
             )}
           </main>

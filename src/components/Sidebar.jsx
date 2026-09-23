@@ -11,7 +11,8 @@ import {
   LogIn,
   UserPlus,
   ChevronsUpDown,
-  Check
+  Check,
+  BarChart3
 } from 'lucide-react';
 import { SpendWiseLogo } from './SpendWiseLogo';
 import { UserAvatar } from './UserAvatar';
@@ -124,6 +125,18 @@ export const Sidebar = ({
                   {unreadTransactionsCount}
                 </span>
               )}
+            </button>
+
+            <button
+              type="button"
+              className={`sidebar-nav-btn ${activeTab === 'analytics' ? 'is-active' : ''}`}
+              onClick={() => {
+                onSelectTab('analytics');
+                if (window.innerWidth <= 768 && isOpen) onClose();
+              }}
+            >
+              <BarChart3 size={16} />
+              <span className="nav-btn-label">{t('nav.analytics')}</span>
             </button>
 
             <button
