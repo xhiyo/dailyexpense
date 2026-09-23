@@ -71,6 +71,9 @@ export const ChartsSection = ({
   const handleResetToToday = () => {
     setPeriodOffset(0);
     setSelectedBarDate(todayISO);
+    if (onSelectDate) {
+      onSelectDate(todayISO);
+    }
   };
 
   const handleShiftPeriod = (delta) => {

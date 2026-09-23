@@ -275,6 +275,14 @@ function App() {
     }
   }, [currentUser]);
 
+  // Core Expense State
+  const [selectedDate, setSelectedDate] = useState(getTodayISO);
+  const [expenses, setExpenses] = useState(() => loadExpenses(activeUserId));
+  const [dailyBudget, setDailyBudget] = useState(() => loadDailyBudget(activeUserId));
+  const [currency, setCurrency] = useState(() => loadCurrency(activeUserId));
+  const [categories, setCategories] = useState(() => loadCategories(activeUserId));
+  const [lastViewedTxTime, setLastViewedTxTime] = useState(() => loadLastViewedTxTime(activeUserId));
+
   // Synchronize route state with browser URL
   const [activeTab, setActiveTab] = useState(() =>
     getRouteFromPathname(window.location.pathname)
@@ -283,6 +291,9 @@ function App() {
 
   const navigateTo = (tabName, options = { replace: false }) => {
     setActiveTab(tabName);
+    if (tabName === 'dashboard') {
+      setSelectedDate(getTodayISO());
+    }
     setIsMobileMenuOpen(false);
     const targetPath = ROUTE_PATHS[tabName] || '/';
     if (window.location.pathname !== targetPath) {
@@ -300,10 +311,31 @@ function App() {
     const handlePopState = () => {
       const route = getRouteFromPathname(window.location.pathname);
       setActiveTab(route);
+      if (route === 'dashboard') {
+        setSelectedDate(getTodayISO());
+      }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // When returning to app or unlocking screen, keep today fresh on dashboard
+  useEffect(() => {
+    const handleVisibilityCheck = () => {
+      if (document.visibilityState === 'visible') {
+        const today = getTodayISO();
+        if (activeTab === 'dashboard') {
+          setSelectedDate(today);
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityCheck);
+    window.addEventListener('focus', handleVisibilityCheck);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityCheck);
+      window.removeEventListener('focus', handleVisibilityCheck);
+    };
+  }, [activeTab]);
 
   // Normalize initial or alias URLs to canonical paths
   useEffect(() => {
@@ -313,13 +345,6 @@ function App() {
       window.history.replaceState({ tab: activeTab }, '', targetPath);
     }
   }, [activeTab]);
-
-  const [selectedDate, setSelectedDate] = useState(getTodayISO);
-  const [expenses, setExpenses] = useState(() => loadExpenses(activeUserId));
-  const [dailyBudget, setDailyBudget] = useState(() => loadDailyBudget(activeUserId));
-  const [currency, setCurrency] = useState(() => loadCurrency(activeUserId));
-  const [categories, setCategories] = useState(() => loadCategories(activeUserId));
-  const [lastViewedTxTime, setLastViewedTxTime] = useState(() => loadLastViewedTxTime(activeUserId));
 
   // Modals & Navigation
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
