@@ -296,8 +296,8 @@ export const SettingsPage = ({
                     {syncStatus === 'syncing'
                       ? (language === 'en' ? 'Syncing...' : 'Menyinkronkan...')
                       : syncStatus === 'done'
-                      ? (language === 'en' ? 'All Synced!' : 'Semua Tersinkron!')
-                      : (language === 'en' ? 'Auto-sync connected' : 'Sinkronisasi aktif')}
+                        ? (language === 'en' ? 'All Synced!' : 'Semua Tersinkron!')
+                        : (language === 'en' ? 'Auto-sync connected' : 'Sinkronisasi aktif')}
                   </span>
                 </div>
               </div>

@@ -6792,6 +6792,7 @@ select.expense-input {
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
     transform: none !important;
     -webkit-transform: none !important;
+    overflow: visible !important;
   }
 
   .mobile-bottom-nav-inner {
@@ -6803,6 +6804,7 @@ select.expense-input {
     margin: 0 auto;
     padding: 0 4px;
     position: relative;
+    overflow: visible;
   }
 
   .mobile-nav-item {
@@ -6836,8 +6838,9 @@ select.expense-input {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+    overflow: visible;
     transition: transform 0.2s ease;
   }
 
