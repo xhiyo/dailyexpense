@@ -6721,7 +6721,7 @@ select.expense-input {
   }
 
   .main-content {
-    padding: 12px 14px calc(76px + env(safe-area-inset-bottom, 16px)) !important;
+    padding: 12px 14px calc(84px + env(safe-area-inset-bottom, 20px)) !important;
     max-width: 100vw !important;
     width: 100% !important;
     overflow-x: hidden !important;
@@ -6751,6 +6751,8 @@ select.expense-input {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
 
   .mobile-bottom-nav-inner {
