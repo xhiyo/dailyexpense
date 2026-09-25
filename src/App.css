@@ -6707,6 +6707,11 @@ select.expense-input {
     padding: 2px;
   }
 
+  /* Hide toast banner on mobile — obstructs content & bottom nav */
+  .toast-container {
+    display: none !important;
+  }
+
   /* 2. Main Content Safe Padding & Fluid Native Scrolling */
   html,
   body {
