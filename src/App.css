@@ -6788,15 +6788,21 @@ select.expense-input {
     overscroll-behavior-y: auto !important;
     touch-action: pan-y !important;
     /*
-     * CRITICAL: pad the bottom so content is never hidden behind the fixed bottom nav.
-     * 64px nav height + env(safe-area-inset-bottom) for notched/home-indicator devices.
+     * Fluid native scrolling: let viewport scroll all the way to bottom edge
+     * while scroll-padding-bottom informs the browser of UI chrome overlay clearance.
      */
-    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: 0 !important;
+    scroll-padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
     box-sizing: border-box !important;
   }
 
   .main-content {
-    padding: 12px 14px 24px !important;
+    /*
+     * CRITICAL: Generous bottom limit & safe clearance so content is never hidden behind the fixed bottom navbar.
+     * Navbar height (64px) + elevated center FAB button offset (24px) + comfortable breathing buffer (32px)
+     * + env(safe-area-inset-bottom) for notched/home-indicator devices = 120px + env(...).
+     */
+    padding: 12px 14px calc(120px + env(safe-area-inset-bottom, 0px)) !important;
     max-width: 100vw !important;
     width: 100% !important;
     min-height: 100% !important;
@@ -6808,7 +6814,11 @@ select.expense-input {
 
   .tab-dashboard-view,
   .tab-transactions-view,
-  .tab-analytics-view {
+  .tab-categories-view,
+  .tab-settings-view,
+  .tab-profile-view,
+  .tab-analytics-view,
+  .mobile-settings-view {
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: hidden !important;
@@ -8495,8 +8505,9 @@ select.expense-input {
   }
 
   /* 10. Settings & Categories Page Mobile Optimizations */
-  .tab-settings-view {
-    padding-bottom: 24px !important;
+  .tab-settings-view,
+  .mobile-settings-view {
+    padding-bottom: 8px !important;
     width: 100% !important;
     gap: 12px !important;
   }
