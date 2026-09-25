@@ -2843,15 +2843,48 @@ select.expense-input {
   opacity: 1;
 }
 
-@media (max-width: 380px) {
+/* Mobile: stack date & time vertically, clean native card style */
+@media (max-width: 768px) {
   .expense-datetime-row {
-    grid-template-columns: 1.25fr 1fr;
+    grid-template-columns: 1fr;
     gap: 8px;
   }
+
   .expense-date-input,
   .expense-time-input {
-    padding: 0 8px;
-    font-size: 0.82rem !important;
+    height: 48px;
+    font-size: 0.95rem !important;
+    font-weight: 500;
+    padding: 0 14px;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border-subtle);
+    /* Hide the default ugly browser calendar/clock icon */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .expense-date-input::-webkit-calendar-picker-indicator,
+  .expense-time-input::-webkit-calendar-picker-indicator {
+    /* Keep it but make it larger & more visible on mobile */
+    opacity: 0.5;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .expense-date-input:focus,
+  .expense-time-input:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+    outline: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .expense-datetime-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }
 
@@ -7434,7 +7467,9 @@ select.expense-input {
   .form-input,
   .modern-search-input,
   .amount-input,
-  .auth-input {
+  .auth-input,
+  .expense-date-input,
+  .expense-time-input {
     font-size: 16px !important;
   }
 
