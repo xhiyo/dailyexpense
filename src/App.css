@@ -6710,7 +6710,7 @@ select.expense-input {
   /* 2. Main Content Safe Padding & Fluid Native Scrolling */
   html,
   body {
-    height: 100% !important;
+    /* Use dvh so height tracks the visual viewport (browser chrome hide/show, PWA) */
     height: 100dvh !important;
     overflow: hidden !important;
     overscroll-behavior-y: none !important;
@@ -6719,19 +6719,17 @@ select.expense-input {
   }
 
   #root {
-    height: 100% !important;
     height: 100dvh !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     background-color: var(--bg-primary) !important;
-    position: relative !important;
+    /* No position:relative needed — bottom nav is now fixed */
   }
 
   .app-layout {
     flex: 1 !important;
     min-height: 0 !important;
-    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
@@ -6746,19 +6744,24 @@ select.expense-input {
     min-height: 0 !important;
     width: 100% !important;
     max-width: 100vw !important;
-    height: 100% !important;
     overflow-y: scroll !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: auto !important;
     touch-action: pan-y !important;
+    /*
+     * CRITICAL: pad the bottom so content is never hidden behind the fixed bottom nav.
+     * 64px nav height + env(safe-area-inset-bottom) for notched/home-indicator devices.
+     */
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    box-sizing: border-box !important;
   }
 
   .main-content {
     padding: 12px 14px 24px !important;
     max-width: 100vw !important;
     width: 100% !important;
-    min-height: calc(100% + 2px) !important;
+    min-height: 100% !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
     display: flex !important;
@@ -6776,16 +6779,20 @@ select.expense-input {
     flex: 1 0 auto !important;
   }
 
-  /* 3. Mobile Bottom Navigation Bar */
+  /* 3. Mobile Bottom Navigation Bar — FIXED to viewport bottom */
   .mobile-bottom-nav {
     display: flex !important;
     flex-direction: column !important;
-    position: relative !important;
-    bottom: auto !important;
-    left: auto !important;
-    right: auto !important;
+    /*
+     * position:fixed keeps the nav bar pinned to the visual viewport bottom.
+     * This is the ONLY reliable approach for PWA mode, browser-chrome-hide on
+     * Android/iOS, and landscape orientation changes.
+     */
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
-    flex-shrink: 0 !important;
     z-index: 990 !important;
     background: var(--bg-card) !important;
     border-top: 1px solid var(--border-subtle) !important;
@@ -6793,7 +6800,7 @@ select.expense-input {
     transform: none !important;
     -webkit-transform: none !important;
     overflow: visible !important;
-    /* Safe area for devices with home indicator */
+    /* Safe area for notched phones / home indicator bar */
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
   }
 
