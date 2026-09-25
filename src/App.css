@@ -6689,8 +6689,6 @@ select.expense-input {
     top: 0;
     z-index: 100;
     background: var(--bg-card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-subtle);
   }
 
@@ -6748,26 +6746,34 @@ select.expense-input {
   /* 2. Main Content Safe Padding & Fluid Native Scrolling */
   html,
   body {
-    /* Use dvh so height tracks the visual viewport (browser chrome hide/show, PWA) */
-    height: 100dvh !important;
+    height: 100% !important;
+    width: 100% !important;
     overflow: hidden !important;
-    overscroll-behavior-y: none !important;
+    overscroll-behavior: none !important;
     touch-action: auto !important;
+    -webkit-overflow-scrolling: touch !important;
     background-color: var(--bg-primary) !important;
   }
 
   #root {
-    height: 100dvh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     overflow: hidden !important;
     background-color: var(--bg-primary) !important;
-    /* No position:relative needed — bottom nav is now fixed */
+    overscroll-behavior: none !important;
   }
 
   .app-layout {
     flex: 1 !important;
     min-height: 0 !important;
+    height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
@@ -6780,17 +6786,17 @@ select.expense-input {
   .app-main-viewport {
     flex: 1 !important;
     min-height: 0 !important;
+    height: 100% !important;
     width: 100% !important;
     max-width: 100vw !important;
-    overflow-y: scroll !important;
+    overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior-y: auto !important;
-    touch-action: pan-y !important;
-    /*
-     * Fluid native scrolling: let viewport scroll all the way to bottom edge
-     * while scroll-padding-bottom informs the browser of UI chrome overlay clearance.
-     */
+    overscroll-behavior-y: contain !important;
+    touch-action: pan-y pinch-zoom !important;
+    will-change: scroll-position;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     padding-bottom: 0 !important;
     scroll-padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
     box-sizing: border-box !important;
@@ -6805,7 +6811,8 @@ select.expense-input {
     padding: 12px 14px calc(120px + env(safe-area-inset-bottom, 0px)) !important;
     max-width: 100vw !important;
     width: 100% !important;
-    min-height: 100% !important;
+    flex: 1 0 auto !important;
+    min-height: 0 !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
     display: flex !important;
