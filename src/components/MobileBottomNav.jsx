@@ -29,7 +29,7 @@ export const MobileBottomNav = ({
           aria-label={t('nav.dashboard')}
         >
           <div className="mobile-nav-icon-wrap">
-            <LayoutDashboard size={20} />
+            <LayoutDashboard size={22} />
           </div>
           <span className="mobile-nav-label">{t('nav.dashboard')}</span>
         </button>
@@ -42,7 +42,7 @@ export const MobileBottomNav = ({
           aria-label={t('nav.transactions')}
         >
           <div className="mobile-nav-icon-wrap">
-            <ReceiptText size={20} />
+            <ReceiptText size={22} />
             {unreadTransactionsCount > 0 && (
               <span className="mobile-nav-badge font-mono">
                 {unreadTransactionsCount > 99 ? '99+' : unreadTransactionsCount}
@@ -61,7 +61,7 @@ export const MobileBottomNav = ({
             title={t('expenses.newExpenseBtn')}
             aria-label={t('expenses.newExpenseBtn')}
           >
-            <Plus size={24} className="mobile-fab-icon" />
+            <Plus size={26} className="mobile-fab-icon" />
           </button>
         </div>
 
@@ -73,7 +73,7 @@ export const MobileBottomNav = ({
           aria-label={t('nav.categories')}
         >
           <div className="mobile-nav-icon-wrap">
-            <Tag size={20} />
+            <Tag size={22} />
           </div>
           <span className="mobile-nav-label">{t('nav.categories')}</span>
         </button>
@@ -86,7 +86,7 @@ export const MobileBottomNav = ({
           aria-label={t('nav.menu')}
         >
           <div className="mobile-nav-icon-wrap">
-            <Menu size={20} />
+            <Menu size={22} />
           </div>
           <span className="mobile-nav-label">{t('nav.menu')}</span>
         </button>
