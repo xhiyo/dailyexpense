@@ -6795,18 +6795,18 @@ select.expense-input {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     padding-bottom: 0 !important;
-    scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom, 12px)) !important;
+    scroll-padding-bottom: calc(148px + env(safe-area-inset-bottom, 24px)) !important;
     box-sizing: border-box !important;
   }
 
   .main-content {
     /*
      * Mobile Bottom Safe Clearance:
-     * Fixed bottom navbar (64px) + elevated center FAB button offset (20px) + comfortable breathing gap (12px)
-     * + env(safe-area-inset-bottom, 12px) = 96px + env(...)
-     * Ensures content stops cleanly right above the bottom nav without excessive empty void or clipping.
+     * Fixed bottom navbar (64px) + elevated center FAB button offset (20px) + comfortable clearance gap (64px)
+     * + env(safe-area-inset-bottom, 24px) = 148px + env(...)
+     * Ensures bottom content stops cleanly and comfortably raised above the bottom nav & elevated FAB button.
      */
-    padding: 12px 14px calc(96px + env(safe-area-inset-bottom, 12px)) !important;
+    padding: 12px 14px calc(148px + env(safe-area-inset-bottom, 24px)) !important;
     max-width: 100vw !important;
     width: 100% !important;
     flex: 1 0 auto !important;
@@ -6991,10 +6991,10 @@ select.expense-input {
   }
 
   .mobile-fab-btn:hover {
-    transform: scale(1.06);
+    transform: none;
     box-shadow:
-      0 6px 22px color-mix(in srgb, var(--accent-primary, #2563eb) 55%, transparent),
-      0 2px 8px rgba(0, 0, 0, 0.18);
+      0 4px 16px color-mix(in srgb, var(--accent-primary, #2563eb) 45%, transparent),
+      0 1px 4px rgba(0, 0, 0, 0.15);
   }
 
   .mobile-fab-btn:active {
@@ -8895,7 +8895,7 @@ select.expense-input {
   .cat-cards-grid {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 24px !important;
   }
 
   .cat-grid-card {
@@ -8929,6 +8929,26 @@ select.expense-input {
     padding: 4px 8px !important;
     font-size: 0.74rem !important;
     border-radius: 6px !important;
+    transition: opacity 0.1s ease, transform 0.1s ease !important;
+  }
+
+  /* No hover effects on mobile - eliminate sticky highlight */
+  .cat-action-btn:hover,
+  .cat-action-btn.edit:hover,
+  .cat-action-btn.delete:hover {
+    border-color: var(--border-subtle) !important;
+    background: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Instant tactile :active response on finger press */
+  .cat-action-btn:active,
+  .cat-action-btn.edit:active,
+  .cat-action-btn.delete:active {
+    opacity: 0.65 !important;
+    transform: scale(0.96) !important;
   }
 
   .cat-editor-grid {
@@ -9071,13 +9091,15 @@ select.expense-input {
     font-size: 0.72rem !important;
   }
 
-  /* Touch Hover & Tap Stabilization: Prevent stutter when swiping over interactive items */
+  /* Touch & Mobile Hover Neutralization: No sticky hover on touch devices */
   .mobile-settings-row,
   .mobile-settings-user-card,
   .mobile-settings-guest-card,
   .mobile-settings-logout-btn,
   .modern-transaction-item,
   .cat-grid-card,
+  .cat-row-card,
+  .cat-action-btn,
   .settings-modern-card,
   .theme-mockup-card,
   .settings-language-tile,
@@ -9088,11 +9110,32 @@ select.expense-input {
   .profile-card,
   .profile-metric-tile,
   .profile-linked-item,
-  .kpi-card {
+  .kpi-card,
+  .mobile-fab-btn,
+  .mobile-nav-item,
+  .btn-primary,
+  .btn-secondary,
+  .btn-add-primary,
+  .cat-btn-add,
+  .cat-header-back-btn,
+  .cat-header-reset-btn,
+  .cat-header-add-btn,
+  .date-nav-arrow,
+  .date-nav-jump-today,
+  .date-nav-picker-button,
+  .date-nav-pill-btn,
+  .analytics-arrow-btn,
+  .analytics-today-pill-btn,
+  .quick-amount-btn,
+  .amount-chip-btn,
+  .category-pill-btn,
+  .topbar-theme-btn,
+  .topbar-avatar-btn {
     -webkit-tap-highlight-color: transparent !important;
     touch-action: pan-y !important;
   }
 
+  /* Disable hover transforms, elevations, and sticky state transitions on mobile */
   .mobile-settings-row:hover,
   .mobile-settings-user-card:hover,
   .mobile-settings-guest-card:hover,
@@ -9108,11 +9151,39 @@ select.expense-input {
   .profile-metric-tile:hover,
   .profile-linked-item:hover,
   .kpi-card:hover,
+  .kpi-action-link:hover,
   .modern-transaction-item:hover,
-  .cat-grid-card:hover {
+  .cat-grid-card:hover,
+  .cat-row-card:hover,
+  .cat-action-btn:hover,
+  .mobile-fab-btn:hover,
+  .mobile-nav-item:hover,
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .btn-add-primary:hover,
+  .cat-btn-add:hover,
+  .cat-header-back-btn:hover,
+  .cat-header-reset-btn:hover,
+  .cat-header-add-btn:hover,
+  .date-nav-arrow:hover,
+  .date-nav-jump-today:hover,
+  .date-nav-picker-button:hover,
+  .date-nav-pill-btn:hover,
+  .analytics-arrow-btn:hover,
+  .analytics-today-pill-btn:hover,
+  .active-day-jump-btn:hover,
+  .active-day-back-today-btn:hover,
+  .quick-amount-btn:hover,
+  .amount-chip-btn:hover,
+  .category-pill-btn:hover,
+  .topbar-theme-btn:hover,
+  .topbar-avatar-btn:hover {
     transform: none !important;
+    box-shadow: inherit !important;
+    filter: none !important;
   }
 
+  /* Clean :active tap feedback without persistent sticky hover */
   .mobile-settings-row:active,
   .mobile-settings-user-card:active,
   .mobile-settings-guest-card:active,
@@ -9121,6 +9192,44 @@ select.expense-input {
   .mobile-settings-logout-btn:active {
     transform: none !important;
     transition: background-color 0.08s ease !important;
+  }
+}
+
+/* ==========================================================================
+   Global Touch Device Neutralization (@media (hover: none))
+   Ensures any touch device has zero sticky hover artifacts regardless of viewport.
+   ========================================================================== */
+@media (hover: none) {
+  *:hover {
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  button:hover,
+  a:hover,
+  [role="button"]:hover,
+  .cat-grid-card:hover,
+  .cat-row-card:hover,
+  .cat-action-btn:hover,
+  .cat-action-btn.edit:hover,
+  .cat-action-btn.delete:hover,
+  .mobile-fab-btn:hover,
+  .mobile-nav-item:hover,
+  .kpi-card:hover,
+  .modern-transaction-item:hover,
+  .settings-modern-card:hover,
+  .theme-mockup-card:hover,
+  .profile-card:hover {
+    transform: none !important;
+    box-shadow: inherit !important;
+    filter: none !important;
+  }
+
+  .cat-action-btn:hover,
+  .cat-action-btn.edit:hover,
+  .cat-action-btn.delete:hover {
+    background: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-subtle) !important;
   }
 }
 
