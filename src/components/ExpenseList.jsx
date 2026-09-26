@@ -287,18 +287,14 @@ export const ExpenseList = ({
 
             return (
               <div key={expense.id} className="modern-transaction-item">
-                {/* Clean Category Dot Indicator */}
-                <div className="tx-indicator-cell">
-                  <span
-                    className="tx-category-indicator"
-                    style={{ backgroundColor: cat.color || '#2563eb' }}
-                    title={localizedCatName}
-                  />
-                </div>
-
                 {/* Info Center */}
                 <div className="tx-details">
                   <div className="tx-title-row">
+                    <span
+                      className="tx-category-indicator"
+                      style={{ backgroundColor: cat.color || '#2563eb' }}
+                      title={localizedCatName}
+                    />
                     <span className="tx-title">{expense.title}</span>
                     <span className="tx-cat-badge">
                       {localizedCatName}
