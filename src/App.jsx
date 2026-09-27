@@ -965,32 +965,33 @@ function App() {
           onRemoveLinkedAccount={handleRequestUnlink}
         />
 
-        {/* Main Content Viewport */}
-        <div className="app-main-viewport">
-          {/* Topbar Header (hidden on mobile inside settings to match native mobile settings page) */}
-          {!(isMobile && activeTab === 'settings') && (
-            <Header
-              onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
-              onOpenMenu={() => navigateTo('settings')}
-              activeTab={activeTab}
-              totalSpendToday={totalSpendToday}
-              currency={currency}
-              currentUser={currentUser}
-              onOpenProfile={() => {
-                if (!currentUser) {
-                  handleOpenLogin();
-                  return;
-                }
-                navigateTo('profile');
-              }}
-              onOpenAuthModal={handleOpenLogin}
-              theme={theme}
-              toggleTheme={toggleTheme}
-            />
-          )}
+        {/* Main Application Container */}
+        <div className="app-main-container">
+          {/* Topbar Header (Fixed top navbar, NEVER scrolls with content) */}
+          <Header
+            onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
+            onOpenMenu={() => navigateTo('settings')}
+            activeTab={activeTab}
+            totalSpendToday={totalSpendToday}
+            currency={currency}
+            currentUser={currentUser}
+            onOpenProfile={() => {
+              if (!currentUser) {
+                handleOpenLogin();
+                return;
+              }
+              navigateTo('profile');
+            }}
+            onOpenAuthModal={handleOpenLogin}
+            theme={theme}
+            toggleTheme={toggleTheme}
+            onBackToDashboard={() => navigateTo('dashboard')}
+          />
 
-          {/* Main Website Content Body */}
-          <main className="main-content">
+          {/* Main Scrollable Content Viewport */}
+          <div className="app-main-viewport">
+            {/* Main Website Content Body */}
+            <main className="main-content">
             {/* TAB 1: RINGKASAN (DASHBOARD) */}
             {activeTab === 'dashboard' && (
               <div className="tab-dashboard-view">
@@ -1168,6 +1169,7 @@ function App() {
           </main>
         </div>
       </div>
+    </div>
 
       {/* Mobile Bottom Navigation Bar (Visible only on mobile <= 768px) */}
       <MobileBottomNav

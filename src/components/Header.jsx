@@ -21,7 +21,8 @@ export const Header = ({
   onOpenProfile,
   onOpenAuthModal,
   theme,
-  toggleTheme
+  toggleTheme,
+  onBackToDashboard
 }) => {
   const { t } = useTranslation();
 
@@ -44,11 +45,17 @@ export const Header = ({
     }
   };
 
-  const handleMenuClick = () => {
-    if (onOpenMenu) {
-      onOpenMenu();
-    } else if (onToggleSidebar) {
-      onToggleSidebar();
+  const handleBrandClick = () => {
+    if (activeTab && activeTab !== 'dashboard') {
+      if (onBackToDashboard) {
+        onBackToDashboard();
+      }
+    } else {
+      if (onOpenMenu) {
+        onOpenMenu();
+      } else if (onToggleSidebar) {
+        onToggleSidebar();
+      }
     }
   };
 
@@ -59,7 +66,7 @@ export const Header = ({
         <div className="topbar-left-col">
           {/* Mobile App Branding & Navigation */}
           <div className="mobile-brand-header">
-            <div className="mobile-brand-logo-wrap" onClick={handleMenuClick} role="button" tabIndex={0}>
+            <div className="mobile-brand-logo-wrap" onClick={handleBrandClick} role="button" tabIndex={0}>
               <SpendWiseLogo size={28} />
               <div className="mobile-brand-text">
                 <span className="mobile-app-name">SpendWise</span>
