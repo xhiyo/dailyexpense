@@ -3,8 +3,11 @@ import { ChevronLeft, ChevronRight, RotateCcw, Calendar } from 'lucide-react';
 import { formatCurrency, formatCalendarSpend } from '../utils/storage';
 import { useTranslation } from '../i18n/LanguageContext';
 
-// Stable ±15 day window around base anchor (31 days total, ~1 full month)
-const RANGE_OFFSET = 15;
+// Infinite scroll configuration
+const INITIAL_PAST_DAYS = 60;   // ~2 months buffer in past
+const INITIAL_FUTURE_DAYS = 60; // ~2 months buffer in future
+const EXPAND_CHUNK = 45;        // Prepend/append 45 days (~1.5 months) when nearing boundaries
+const SCROLL_THRESHOLD = 600;   // Distance in px from edge to trigger expansion
 
 export const DateNavigator = ({
   selectedDate,
@@ -46,14 +49,21 @@ export const DateNavigator = ({
     return `${year}-${month}-${day}`;
   }, []);
 
-  // Always compute current date fresh so next-day rollover is instantaneous
+  // Current date
   const todayStr = formatToISO(new Date());
   const isSelectedToday = (selectedDate || todayStr) === todayStr;
 
-  // Base anchor date for the ±15-day range window
+  // Base anchor date and dynamic infinite buffer days
   const [baseDateStr, setBaseDateStr] = useState(() => selectedDate || todayStr);
+  const [pastDays, setPastDays] = useState(INITIAL_PAST_DAYS);
+  const [futureDays, setFutureDays] = useState(INITIAL_FUTURE_DAYS);
 
   const isInitialMountRef = useRef(true);
+  const isReadyRef = useRef(false);
+  const isExpandingPastRef = useRef(false);
+  const isExpandingFutureRef = useRef(false);
+  const prevScrollWidthRef = useRef(0);
+
   const lastScrollOrDragTime = useRef(0);
   const isMouseDown = useRef(false);
   const mouseStartX = useRef(0);
@@ -72,7 +82,7 @@ export const DateNavigator = ({
     return map;
   }, [expenses]);
 
-  // Center the selected date pill inside the strip container with sub-pixel precision
+  // Center the selected date pill inside the strip container
   const centerSelectedPill = useCallback((behavior = 'auto') => {
     const container = stripRef.current;
     if (!container) return false;
@@ -99,15 +109,35 @@ export const DateNavigator = ({
     return true;
   }, []);
 
-  // Instant positioning before first paint (zero layout jump, zero flash of leftmost date)
+  // Instant positioning before first paint when base date changes or on mount
   useLayoutEffect(() => {
     centerSelectedPill('auto');
+    isReadyRef.current = true;
   }, [baseDateStr, centerSelectedPill]);
 
-  // Immediate frame fallback for cases where initial layout width was 0 during tab mount
+  // Synchronously compensate scroll offset when prepending past days to eliminate visual jump
+  useLayoutEffect(() => {
+    if (isExpandingPastRef.current && stripRef.current) {
+      const newScrollWidth = stripRef.current.scrollWidth;
+      const delta = newScrollWidth - prevScrollWidthRef.current;
+      if (delta > 0) {
+        stripRef.current.scrollLeft += delta;
+        if (isMouseDown.current) {
+          mouseScrollLeft.current += delta;
+        }
+      }
+      isExpandingPastRef.current = false;
+    }
+    if (isExpandingFutureRef.current) {
+      isExpandingFutureRef.current = false;
+    }
+  }, [pastDays, futureDays]);
+
+  // ResizeObserver fallback for zero-width tab initial mount
   useEffect(() => {
     const animId = requestAnimationFrame(() => {
       centerSelectedPill('auto');
+      isReadyRef.current = true;
     });
 
     let ro = null;
@@ -126,6 +156,28 @@ export const DateNavigator = ({
     };
   }, [centerSelectedPill]);
 
+  // Check infinite scroll boundary thresholds
+  const checkInfiniteScroll = useCallback(() => {
+    const container = stripRef.current;
+    if (!container || !isReadyRef.current || container.clientWidth === 0) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+
+    // Approaching left edge (past dates)
+    if (scrollLeft < SCROLL_THRESHOLD && !isExpandingPastRef.current) {
+      isExpandingPastRef.current = true;
+      prevScrollWidthRef.current = scrollWidth;
+      setPastDays(prev => prev + EXPAND_CHUNK);
+    }
+
+    // Approaching right edge (future dates)
+    const distanceToRight = scrollWidth - (scrollLeft + clientWidth);
+    if (distanceToRight < SCROLL_THRESHOLD && !isExpandingFutureRef.current) {
+      isExpandingFutureRef.current = true;
+      setFutureDays(prev => prev + EXPAND_CHUNK);
+    }
+  }, []);
+
   // Handle selectedDate changes after initial mount
   useEffect(() => {
     if (isInitialMountRef.current) {
@@ -139,16 +191,19 @@ export const DateNavigator = ({
     const sel = parseLocalDate(selectedDate);
     const diffDays = Math.round((sel - base) / (1000 * 60 * 60 * 24));
 
-    if (Math.abs(diffDays) > 12) {
-      // Re-anchor window to selected date (useLayoutEffect will instantly center it)
+    // If selected date is near or outside the loaded window, re-anchor around selectedDate
+    if (diffDays <= -pastDays + 10 || diffDays >= futureDays - 10) {
+      isReadyRef.current = false;
       setBaseDateStr(selectedDate);
+      setPastDays(INITIAL_PAST_DAYS);
+      setFutureDays(INITIAL_FUTURE_DAYS);
     } else {
       // Smoothly glide to center for nearby day selection
       centerSelectedPill('smooth');
     }
-  }, [selectedDate, baseDateStr, centerSelectedPill, parseLocalDate]);
+  }, [selectedDate, baseDateStr, pastDays, futureDays, centerSelectedPill, parseLocalDate]);
 
-  // Desktop Mouse Drag with Global Window Listeners (prevents stuck drag states)
+  // Desktop Mouse Drag with Global Window Listeners
   const handleMouseDown = (e) => {
     if (e.button !== 0 || !stripRef.current) return;
     isMouseDown.current = true;
@@ -166,6 +221,7 @@ export const DateNavigator = ({
         setIsDraggingState(true);
       }
       stripRef.current.scrollLeft = mouseScrollLeft.current - walk;
+      checkInfiniteScroll();
     };
 
     const handleGlobalMouseUp = () => {
@@ -187,10 +243,35 @@ export const DateNavigator = ({
       window.removeEventListener('mousemove', handleGlobalMouseMove);
       window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
-  }, []);
+  }, [checkInfiniteScroll]);
 
+  // Desktop Mouse Wheel Listener: converts vertical mouse wheel over strip to horizontal infinite scroll
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return;
+
+    const handleWheel = (e) => {
+      const isTrackpadHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+      const delta = isTrackpadHorizontal ? e.deltaX : e.deltaY;
+
+      if (delta !== 0) {
+        e.preventDefault();
+        el.scrollLeft += delta;
+        lastScrollOrDragTime.current = Date.now();
+        checkInfiniteScroll();
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+    };
+  }, [checkInfiniteScroll]);
+
+  // Handle native scroll event (covers mobile touch scroll and desktop momentum)
   const handleScroll = () => {
     lastScrollOrDragTime.current = Date.now();
+    checkInfiniteScroll();
   };
 
   // Deliberate Pill Click
@@ -211,12 +292,41 @@ export const DateNavigator = ({
   const handleShiftDay = (delta) => {
     const current = parseLocalDate(selectedDate || todayStr);
     current.setDate(current.getDate() + delta);
-    onSelectDate(formatToISO(current));
+    const nextIso = formatToISO(current);
+
+    const base = parseLocalDate(baseDateStr);
+    const diffDays = Math.round((current - base) / (1000 * 60 * 60 * 24));
+
+    if (diffDays <= -pastDays + 15) {
+      if (!isExpandingPastRef.current) {
+        isExpandingPastRef.current = true;
+        if (stripRef.current) {
+          prevScrollWidthRef.current = stripRef.current.scrollWidth;
+        }
+        setPastDays(prev => prev + EXPAND_CHUNK);
+      }
+    } else if (diffDays >= futureDays - 15) {
+      if (!isExpandingFutureRef.current) {
+        isExpandingFutureRef.current = true;
+        setFutureDays(prev => prev + EXPAND_CHUNK);
+      }
+    }
+
+    onSelectDate(nextIso);
   };
 
   const handleJumpToToday = () => {
     const today = formatToISO(new Date());
-    setBaseDateStr(today);
+    const base = parseLocalDate(baseDateStr);
+    const sel = parseLocalDate(today);
+    const diffDays = Math.round((sel - base) / (1000 * 60 * 60 * 24));
+
+    if (Math.abs(diffDays) > 30) {
+      isReadyRef.current = false;
+      setBaseDateStr(today);
+      setPastDays(INITIAL_PAST_DAYS);
+      setFutureDays(INITIAL_FUTURE_DAYS);
+    }
     onSelectDate(today);
   };
 
@@ -234,28 +344,35 @@ export const DateNavigator = ({
     }
   };
 
-  // Generate stable 31-day strip around baseDateStr
+  // Generate continuous date strip spanning pastDays and futureDays
   const dayStrip = useMemo(() => {
     const baseDate = parseLocalDate(baseDateStr);
+    const by = baseDate.getFullYear();
+    const bm = baseDate.getMonth();
+    const bd = baseDate.getDate();
     const days = [];
-    for (let i = -RANGE_OFFSET; i <= RANGE_OFFSET; i++) {
-      const d = new Date(baseDate);
-      d.setDate(d.getDate() + i);
+
+    for (let i = -pastDays; i <= futureDays; i++) {
+      const d = new Date(by, bm, bd + i);
       const iso = formatToISO(d);
       const dayTotal = expenseMap[iso] || 0;
+      const isFirstOfMonth = d.getDate() === 1;
+      const monthShort = d.toLocaleDateString(locale, { month: 'short' });
 
       days.push({
         iso,
         date: d,
         weekday: d.toLocaleDateString(locale, { weekday: 'short' }),
         dayNumber: d.getDate(),
+        monthShort,
+        isFirstOfMonth,
         total: dayTotal,
         isToday: iso === todayStr,
         isSelected: iso === (selectedDate || todayStr)
       });
     }
     return days;
-  }, [baseDateStr, expenseMap, todayStr, selectedDate, locale, parseLocalDate, formatToISO]);
+  }, [baseDateStr, pastDays, futureDays, expenseMap, todayStr, selectedDate, locale, parseLocalDate, formatToISO]);
 
   const selectedDateObject = parseLocalDate(selectedDate || todayStr);
   const formattedFullDate = selectedDateObject.toLocaleDateString(locale, {
@@ -313,7 +430,10 @@ export const DateNavigator = ({
               value={selectedDate || todayStr}
               onChange={(e) => {
                 if (e.target.value) {
+                  isReadyRef.current = false;
                   setBaseDateStr(e.target.value);
+                  setPastDays(INITIAL_PAST_DAYS);
+                  setFutureDays(INITIAL_FUTURE_DAYS);
                   onSelectDate(e.target.value);
                 }
               }}
@@ -342,7 +462,7 @@ export const DateNavigator = ({
         </div>
       </div>
 
-      {/* Smooth, Stable Sliding Pill Strip */}
+      {/* Smooth, Infinite Sliding Pill Strip */}
       <div
         className={`date-nav-pill-strip ${isDraggingState ? 'is-dragging' : ''}`}
         ref={stripRef}
@@ -356,11 +476,13 @@ export const DateNavigator = ({
             <button
               key={day.iso}
               type="button"
-              className={`date-nav-pill-btn ${day.isSelected ? 'is-selected' : ''} ${day.isToday ? 'is-today' : ''}`}
+              className={`date-nav-pill-btn ${day.isSelected ? 'is-selected' : ''} ${day.isToday ? 'is-today' : ''} ${day.isFirstOfMonth ? 'pill-is-first-of-month' : ''}`}
               onClick={() => handlePillClick(day.iso)}
-              title={`${day.weekday}, ${day.dayNumber} - ${fullSpend}`}
+              title={`${day.weekday}, ${day.dayNumber} ${day.monthShort} - ${fullSpend}`}
             >
-              <span className="pill-weekday">{day.weekday}</span>
+              <span className={`pill-weekday ${day.isFirstOfMonth ? 'pill-month-indicator' : ''}`}>
+                {day.isFirstOfMonth ? day.monthShort.toUpperCase() : day.weekday}
+              </span>
               <span className="pill-daynumber">{day.dayNumber}</span>
               <div className="pill-spend-slot" title={fullSpend}>
                 {day.total > 0 ? (
