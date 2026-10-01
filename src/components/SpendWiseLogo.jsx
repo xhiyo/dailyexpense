@@ -5,7 +5,7 @@ import React from 'react';
  * Clean, minimalist, human-designed 'S' monogram.
  * Pure vector path with NO background box (transparent background).
  */
-export const SpendWiseLogo = ({ size = 34, className = '', color = '#2563EB', strokeWidth = 3.8 }) => {
+export const SpendWiseLogo = ({ size = 34, className = '', color = 'var(--accent-primary, #2563EB)', strokeWidth = 3.6 }) => {
   return (
     <svg
       width={size}
@@ -14,9 +14,11 @@ export const SpendWiseLogo = ({ size = 34, className = '', color = '#2563EB', st
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={`spendwise-logo-svg ${className}`}
+      shapeRendering="geometricPrecision"
       style={{
         flexShrink: 0,
-        display: 'block'
+        display: 'block',
+        transform: 'translateZ(0)'
       }}
     >
       {/* Clean Minimalist 'S' Monogram - No background box */}
