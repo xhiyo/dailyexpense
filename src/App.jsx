@@ -430,7 +430,7 @@ function App() {
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f172a' : '#f8fafc');
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#1e293b' : '#ffffff');
     }
 
     const activeAccent = ACCENT_COLORS.find(

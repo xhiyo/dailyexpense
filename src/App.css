@@ -406,12 +406,12 @@
   width: 100%;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
   z-index: 50;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
 .topbar-inner {
@@ -6723,8 +6723,9 @@ select.expense-input {
     left: 0 !important;
     width: 100% !important;
     z-index: 100 !important;
-    background: var(--bg-card) !important;
+    background: var(--bg-secondary) !important;
     border-bottom: 1px solid var(--border-subtle) !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     touch-action: pan-x pan-y !important;
@@ -6733,7 +6734,6 @@ select.expense-input {
     box-sizing: border-box !important;
     -webkit-font-smoothing: antialiased !important;
     -moz-osx-font-smoothing: grayscale !important;
-    text-rendering: optimizeLegibility !important;
   }
 
   .topbar-inner {
@@ -6794,7 +6794,8 @@ select.expense-input {
     height: 100% !important;
     width: 100% !important;
     overflow: hidden !important;
-    overscroll-behavior: none !important;
+    overscroll-behavior-y: auto !important;
+    overscroll-behavior-x: none !important;
     touch-action: auto !important;
     -webkit-overflow-scrolling: touch !important;
     background-color: var(--bg-primary) !important;
@@ -6845,7 +6846,7 @@ select.expense-input {
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: auto !important;
     overscroll-behavior-x: none !important;
-    touch-action: pan-y !important;
+    touch-action: pan-y pinch-zoom !important;
     scroll-behavior: auto !important;
     padding-bottom: 0 !important;
     scroll-padding-bottom: calc(148px + env(safe-area-inset-bottom, 24px)) !important;
@@ -6863,7 +6864,7 @@ select.expense-input {
     max-width: 100vw !important;
     width: 100% !important;
     flex: 1 0 auto !important;
-    min-height: 0 !important;
+    min-height: calc(100% + 1px) !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;

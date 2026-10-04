@@ -17,8 +17,7 @@ export const SpendWiseLogo = ({ size = 34, className = '', color = 'var(--accent
       shapeRendering="geometricPrecision"
       style={{
         flexShrink: 0,
-        display: 'block',
-        transform: 'translateZ(0)'
+        display: 'block'
       }}
     >
       {/* Clean Minimalist 'S' Monogram - No background box */}
