@@ -6721,14 +6721,19 @@ select.expense-input {
     position: relative !important;
     top: 0 !important;
     left: 0 !important;
+    right: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
     z-index: 100 !important;
     background: var(--bg-secondary) !important;
     border-bottom: 1px solid var(--border-subtle) !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    /* Flat, edge-to-edge app bar: no drop shadow (was causing the "blurry/shadowed" look) */
+    box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
-    touch-action: pan-x pan-y !important;
+    /* Header lives outside the scroller: swipes on it must never move the page */
+    touch-action: none !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     box-sizing: border-box !important;
@@ -6792,10 +6797,13 @@ select.expense-input {
   html,
   body {
     height: 100% !important;
+    /* index.css sets body min-height:100vh. On mobile 100vh > visible viewport
+       (includes address bar), which gave the document ~56px of scroll room and
+       made the topbar slide away on fast flings. Must be neutralised. */
+    min-height: 0 !important;
     width: 100% !important;
     overflow: hidden !important;
-    overscroll-behavior-y: auto !important;
-    overscroll-behavior-x: none !important;
+    overscroll-behavior: none !important;
     touch-action: auto !important;
     -webkit-overflow-scrolling: touch !important;
     background-color: var(--bg-primary) !important;
@@ -6811,9 +6819,13 @@ select.expense-input {
   }
 
   .app-layout {
+    /* Pin the whole app shell to the visible viewport so the document itself
+       can never scroll — topbar stays put no matter how fast the user flings. */
+    position: fixed !important;
+    inset: 0 !important;
     flex: 1 !important;
     min-height: 0 !important;
-    height: 100% !important;
+    height: auto !important;
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
@@ -6844,7 +6856,8 @@ select.expense-input {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior-y: auto !important;
+    /* Stop scroll chaining from the content into the document */
+    overscroll-behavior-y: contain !important;
     overscroll-behavior-x: none !important;
     touch-action: pan-y pinch-zoom !important;
     scroll-behavior: auto !important;

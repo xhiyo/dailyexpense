@@ -163,7 +163,7 @@ export const SettingsPage = ({
                 <span className="mobile-row-title">{language === 'en' ? 'Daily Limit' : 'Batas Limit'}</span>
                 <span className="mobile-row-desc font-mono">
                   {dailyBudget > 0 ?
-                   formatCurrency(dailyBudget, currency) : (language === 'en' ? 'No limit set' : 'Tanpa batas')}
+                    formatCurrency(dailyBudget, currency) : (language === 'en' ? 'No limit set' : 'Tanpa batas')}
                 </span>
               </div>
             </div>
