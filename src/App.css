@@ -6862,18 +6862,18 @@ select.expense-input {
     touch-action: pan-y pinch-zoom !important;
     scroll-behavior: auto !important;
     padding-bottom: 0 !important;
-    scroll-padding-bottom: calc(148px + env(safe-area-inset-bottom, 24px)) !important;
+    scroll-padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
     box-sizing: border-box !important;
   }
 
   .main-content {
     /*
      * Mobile Bottom Safe Clearance:
-     * Fixed bottom navbar (64px) + elevated center FAB button offset (20px) + comfortable clearance gap (64px)
-     * + env(safe-area-inset-bottom, 24px) = 148px + env(...)
-     * Ensures bottom content stops cleanly and comfortably raised above the bottom nav & elevated FAB button.
+     * Fixed bottom navbar (64px) + small breathing gap (24px, also clears the
+     * elevated center FAB) + env(safe-area-inset-bottom) for home-indicator phones.
+     * Last item ends just above the bottom nav — no big empty gap.
      */
-    padding: 12px 14px calc(148px + env(safe-area-inset-bottom, 24px)) !important;
+    padding: 12px 14px calc(88px + env(safe-area-inset-bottom, 0px)) !important;
     max-width: 100vw !important;
     width: 100% !important;
     flex: 1 0 auto !important;
@@ -7570,19 +7570,14 @@ select.expense-input {
   /* 5. Dashboard Spacing on Mobile */
   .tab-dashboard-view {
     gap: 16px !important;
-    min-height: calc(100% + 4px) !important;
     display: flex !important;
     flex-direction: column !important;
   }
 
+  /* No extra trailing spacer: .main-content bottom padding already clears the bottom nav */
   .tab-dashboard-view::after {
-    content: '';
-    display: block;
-    height: 6px;
-    width: 100%;
-    flex-shrink: 0;
-    pointer-events: none;
-    visibility: hidden;
+    content: none !important;
+    display: none !important;
   }
 
   /* 6. Mobile Date Strip & Controls */
@@ -8613,6 +8608,10 @@ select.expense-input {
 
   .mobile-settings-card {
     margin-bottom: 14px !important;
+  }
+
+  .mobile-settings-card:last-child {
+    margin-bottom: 0 !important;
   }
 
   .page-header-banner {
