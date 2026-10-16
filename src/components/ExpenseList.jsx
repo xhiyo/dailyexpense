@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Edit2, Trash2, Plus } from 'lucide-react';
-import { getCategoryById, CATEGORIES, PAYMENT_METHODS } from '../data/categories';
+import { Search, Edit2, Trash2, Plus, Calendar, CheckCircle2 } from 'lucide-react';
+import { getCategoryById, CATEGORIES, PAYMENT_METHODS, hexToRgba } from '../data/categories';
+import { CategoryIcon } from './CategoryIcon';
 import { formatCurrency } from '../utils/storage';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -58,24 +59,78 @@ export const ExpenseList = ({
     return '--:--';
   };
 
-  const getDayName = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return '';
-    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    const locale = language === 'en' ? 'en-US' : 'id-ID';
-    return d.toLocaleDateString(locale, { weekday: 'long' });
+  // Safe parsing of YYYY-MM-DD avoiding any timezone shifts
+  const parseYMD = (dateStr) => {
+    if (!dateStr || typeof dateStr !== 'string') return null;
+    const parts = dateStr.trim().split('-');
+    if (parts.length !== 3) return null;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+    return new Date(y, m, d);
   };
 
-  const formatExpenseDateWithDay = (dateStr) => {
-    if (!dateStr) return '';
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return '';
-    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  const formatYMD = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const todayStr = useMemo(() => formatYMD(new Date()), []);
+  const yesterdayStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return formatYMD(d);
+  }, []);
+
+  // Format date header details in Gojek style
+  const getDateInfo = (dateStr) => {
+    const d = parseYMD(dateStr);
+    const isToday = dateStr === todayStr;
+    const isYesterday = dateStr === yesterdayStr;
     const locale = language === 'en' ? 'en-US' : 'id-ID';
-    const day = d.toLocaleDateString(locale, { weekday: 'short' });
-    const formatted = d.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
-    return `${day}, ${formatted}`;
+
+    let title = '';
+    let subtitle = '';
+
+    if (isToday) {
+      title = language === 'en' ? 'Today' : 'Hari ini';
+      subtitle = d
+        ? d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })
+        : dateStr;
+    } else if (isYesterday) {
+      title = language === 'en' ? 'Yesterday' : 'Kemarin';
+      subtitle = d
+        ? d.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })
+        : dateStr;
+    } else if (d && !isNaN(d.getTime())) {
+      title = d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+      subtitle = d.toLocaleDateString(locale, { weekday: 'long' });
+    } else {
+      title = dateStr || (language === 'en' ? 'Other' : 'Lainnya');
+      subtitle = '';
+    }
+
+    return { title, subtitle, isToday, isYesterday, dateStr };
+  };
+
+  const getPaymentMethodDisplay = (methodId) => {
+    const item = PAYMENT_METHODS.find(m => m.id === methodId);
+    if (!item) return language === 'en' ? 'Cash' : 'Tunai';
+    if (language === 'en') {
+      if (item.id === 'wallet') return 'GoPay / E-Wallet';
+      if (item.id === 'transfer') return 'Bank Transfer';
+      if (item.id === 'cash') return 'Cash';
+      if (item.id === 'card') return 'Debit / Credit Card';
+      return item.name;
+    }
+    if (item.id === 'wallet') return 'GoPay / E-Wallet';
+    if (item.id === 'transfer') return 'Transfer Bank';
+    if (item.id === 'cash') return 'Tunai';
+    if (item.id === 'card') return 'Kartu Debit/Kredit';
+    return item.name;
   };
 
   // Filter & sort expenses
@@ -138,22 +193,43 @@ export const ExpenseList = ({
   }, [expenses, selectedDate, filterDateMode, searchTerm, selectedCategory, sortBy]);
 
   const totalFilteredAmount = useMemo(() => {
-    return filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    return filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
   }, [filteredExpenses]);
 
-  const getMethodName = (methodId) => {
-    const item = PAYMENT_METHODS.find(m => m.id === methodId);
-    if (!item) return language === 'en' ? 'Cash' : 'Tunai';
-    return item.name;
-  };
+  // Group filtered expenses by date for Gojek-style date grouping
+  const groupedExpenses = useMemo(() => {
+    if (!filteredExpenses.length) return [];
 
-  const todayStr = useMemo(() => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }, []);
+    const dateMap = new Map();
+    for (const exp of filteredExpenses) {
+      const d = exp.date || 'unknown';
+      if (!dateMap.has(d)) {
+        dateMap.set(d, []);
+      }
+      dateMap.get(d).push(exp);
+    }
+
+    const dateKeys = Array.from(dateMap.keys());
+
+    dateKeys.sort((a, b) => {
+      if (sortBy === 'time-asc') {
+        return a.localeCompare(b);
+      }
+      return b.localeCompare(a);
+    });
+
+    return dateKeys.map(dateKey => {
+      const items = dateMap.get(dateKey) || [];
+      const totalAmount = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      return {
+        dateKey,
+        dateInfo: getDateInfo(dateKey),
+        items,
+        totalAmount
+      };
+    });
+  }, [filteredExpenses, sortBy, language, todayStr, yesterdayStr]);
+
   const isSelectedToday = selectedDate === todayStr;
 
   return (
@@ -163,10 +239,10 @@ export const ExpenseList = ({
         <div className="section-heading-wrap">
           <h3 className="modern-section-title">
             {filterDateMode === 'all'
-              ? (language === 'en' ? 'All Expense Records' : 'Semua Riwayat Transaksi')
+              ? (language === 'en' ? 'Transaction History' : 'Riwayat Transaksi')
               : isSelectedToday
-                ? (language === 'en' ? "Today's Transactions" : 'Daftar Transaksi Hari Ini')
-                : (language === 'en' ? 'Transactions on Selected Date' : 'Daftar Transaksi Tanggal Terpilih')}
+                ? (language === 'en' ? "Today's Transactions" : 'Transaksi Hari Ini')
+                : (language === 'en' ? 'Transactions on Selected Date' : 'Transaksi Tanggal Terpilih')}
           </h3>
           <span className="section-heading-meta">
             {filteredExpenses.length} {t('common.transactions').toLowerCase()} • Total: <strong className="font-mono">{formatCurrency(totalFilteredAmount, currency)}</strong>
@@ -253,7 +329,7 @@ export const ExpenseList = ({
         </div>
       </div>
 
-      {/* Transaction List Feed */}
+      {/* Transaction List Feed (Gojek-style Grouped by Date) */}
       {filteredExpenses.length === 0 ? (
         <div className="modern-empty-state">
           <p className="empty-state-title">
@@ -280,79 +356,164 @@ export const ExpenseList = ({
           </button>
         </div>
       ) : (
-        <div className="modern-transaction-list">
-          {filteredExpenses.map((expense) => {
-            const cat = getCategoryById(expense.categoryId, categories);
-            const localizedCatName = localizeCategoryName(cat);
-
-            return (
-              <div key={expense.id} className="modern-transaction-item">
-                {/* Info Center */}
-                <div className="tx-details">
-                  <div className="tx-title-row">
-                    <span
-                      className="tx-category-indicator"
-                      style={{ backgroundColor: cat.color || '#2563eb' }}
-                      title={localizedCatName}
-                    />
-                    <span className="tx-title">{expense.title}</span>
-                    <span className="tx-cat-badge">
-                      {localizedCatName}
+        <div className="gojek-transactions-feed" id="transactions-feed">
+          {groupedExpenses.map((group) => (
+            <div key={group.dateKey} className="gojek-date-group">
+              {/* Pembatas Tanggal / Gojek Date Boundary Header */}
+              <div className="gojek-date-header">
+                <div className="gojek-date-header-left">
+                  <span
+                    className={`gojek-date-pill ${
+                      group.dateInfo.isToday
+                        ? 'is-today'
+                        : group.dateInfo.isYesterday
+                          ? 'is-yesterday'
+                          : ''
+                    }`}
+                  >
+                    <Calendar size={13} className="gojek-date-pill-icon" />
+                    <span className="gojek-date-pill-text">{group.dateInfo.title}</span>
+                  </span>
+                  {group.dateInfo.subtitle && (
+                    <span className="gojek-date-subtext">
+                      {group.dateInfo.subtitle}
                     </span>
-                  </div>
-
-                  <div className="tx-sub-row">
-                    <span className="tx-day-label">
-                      {filterDateMode === 'all' || expense.date !== selectedDate
-                        ? formatExpenseDateWithDay(expense.date)
-                        : getDayName(expense.date)}
-                    </span>
-                    <span className="tx-bullet">•</span>
-                    <span className="tx-time">
-                      {getExpenseDisplayTime(expense)}
-                    </span>
-                    <span className="tx-bullet">•</span>
-                    <span className="tx-method">{getMethodName(expense.paymentMethod)}</span>
-                    {expense.notes && (
-                      <>
-                        <span className="tx-bullet">•</span>
-                        <span className="tx-notes">{expense.notes}</span>
-                      </>
-                    )}
-                  </div>
+                  )}
                 </div>
 
-                {/* Amount */}
-                <div className="tx-amount-col">
-                  <span className="tx-amount-value font-mono">
-                    -{formatCurrency(expense.amount, currency)}
+                <div className="gojek-date-header-right">
+                  <span className="gojek-date-count">
+                    {group.items.length}{' '}
+                    {language === 'en'
+                      ? group.items.length === 1
+                        ? 'transaction'
+                        : 'transactions'
+                      : 'transaksi'}
+                  </span>
+                  <span className="gojek-date-sep">•</span>
+                  <span className="gojek-date-total font-mono">
+                    Total: {formatCurrency(group.totalAmount, currency)}
                   </span>
                 </div>
-
-                {/* Actions (Edit & Delete) */}
-                <div className="tx-actions-col">
-                  <button
-                    type="button"
-                    className="tx-action-btn"
-                    onClick={() => onEditExpense(expense)}
-                    title={t('common.edit')}
-                    aria-label="Edit expense"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className="tx-action-btn btn-delete"
-                    onClick={() => onDeleteExpense(expense.id)}
-                    title={t('common.delete')}
-                    aria-label="Delete expense"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
               </div>
-            );
-          })}
+
+              {/* Gojek Date Card containing transactions for this date */}
+              <div className="gojek-date-card">
+                {group.items.map((expense) => {
+                  const cat = getCategoryById(expense.categoryId, categories);
+                  const localizedCatName = localizeCategoryName(cat);
+                  const paymentDisplay = getPaymentMethodDisplay(expense.paymentMethod);
+                  const displayTime = getExpenseDisplayTime(expense);
+
+                  return (
+                    <div
+                      key={expense.id}
+                      className="gojek-transaction-row"
+                      onClick={() => onEditExpense && onEditExpense(expense)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onEditExpense && onEditExpense(expense);
+                        }
+                      }}
+                      title={language === 'en' ? 'Click to edit expense' : 'Klik untuk edit transaksi'}
+                    >
+                      {/* Category Icon Tile */}
+                      <div
+                        className="gojek-icon-tile"
+                        style={{
+                          backgroundColor: cat.bgLight || hexToRgba(cat.color || '#2563eb', 0.12),
+                          borderColor: cat.border || hexToRgba(cat.color || '#2563eb', 0.28)
+                        }}
+                      >
+                        <CategoryIcon
+                          name={cat.icon}
+                          size={22}
+                          color={cat.color || '#2563eb'}
+                        />
+                      </div>
+
+                      {/* Main Transaction Details */}
+                      <div className="gojek-tx-content">
+                        <div className="gojek-tx-main-line">
+                          <span className="gojek-tx-title" title={expense.title}>
+                            {expense.title}
+                          </span>
+                          <span
+                            className="gojek-tx-cat-chip"
+                            style={{
+                              color: cat.color || 'var(--text-secondary)',
+                              borderColor: hexToRgba(cat.color || '#2563eb', 0.25)
+                            }}
+                          >
+                            {localizedCatName}
+                          </span>
+                        </div>
+
+                        <div className="gojek-tx-meta-line">
+                          <span className="gojek-meta-time">{displayTime}</span>
+                          <span className="gojek-meta-sep">•</span>
+                          <span className="gojek-meta-method">{paymentDisplay}</span>
+                          {expense.notes && (
+                            <>
+                              <span className="gojek-meta-sep">•</span>
+                              <span className="gojek-meta-notes" title={expense.notes}>
+                                {expense.notes}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Amount & Status Badge */}
+                      <div className="gojek-tx-amount-block">
+                        <span className="gojek-tx-amount font-mono">
+                          -{formatCurrency(expense.amount, currency)}
+                        </span>
+                        <span className="gojek-status-badge">
+                          <CheckCircle2 size={11} className="gojek-status-icon" />
+                          <span>{language === 'en' ? 'Completed' : 'Berhasil'}</span>
+                        </span>
+                      </div>
+
+                      {/* Quick Actions (Edit & Delete) */}
+                      <div
+                        className="gojek-tx-actions"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          className="gojek-action-btn btn-edit"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEditExpense && onEditExpense(expense);
+                          }}
+                          title={t('common.edit')}
+                          aria-label="Edit expense"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className="gojek-action-btn btn-delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteExpense && onDeleteExpense(expense.id);
+                          }}
+                          title={t('common.delete')}
+                          aria-label="Delete expense"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </section>

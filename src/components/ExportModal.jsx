@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { 
-  X, 
-  Download, 
-  FileSpreadsheet, 
-  Calendar, 
-  Clock, 
-  Layers, 
+import {
+  X,
+  Download,
+  FileSpreadsheet,
+  Calendar,
+  Clock,
+  Layers,
   AlertCircle
 } from 'lucide-react';
 import { formatCurrency, exportToExcel } from '../utils/storage';
@@ -111,10 +111,10 @@ export const ExportModal = ({
   // Compute active date boundaries
   const activeDateRange = useMemo(() => {
     if (rangeType === 'all') {
-      return { 
-        start: null, 
-        end: null, 
-        label: language === 'en' ? 'All Recorded Transactions' : 'Seluruh Riwayat Transaksi' 
+      return {
+        start: null,
+        end: null,
+        label: language === 'en' ? 'All Recorded Transactions' : 'Seluruh Riwayat Transaksi'
       };
     }
 
@@ -123,10 +123,10 @@ export const ExportModal = ({
       dStart.setDate(dStart.getDate() - 6);
       const start = formatDateISO(dStart);
       const end = todayStr;
-      return { 
-        start, 
-        end, 
-        label: `${formatHumanDate(start)} — ${formatHumanDate(end)}` 
+      return {
+        start,
+        end,
+        label: `${formatHumanDate(start)} — ${formatHumanDate(end)}`
       };
     }
 
@@ -135,10 +135,10 @@ export const ExportModal = ({
       dStart.setDate(dStart.getDate() - 29);
       const start = formatDateISO(dStart);
       const end = todayStr;
-      return { 
-        start, 
-        end, 
-        label: `${formatHumanDate(start)} — ${formatHumanDate(end)}` 
+      return {
+        start,
+        end,
+        label: `${formatHumanDate(start)} — ${formatHumanDate(end)}`
       };
     }
 
@@ -148,10 +148,10 @@ export const ExportModal = ({
       const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
       const end = `${selectedYear}-${m}-${String(lastDay).padStart(2, '0')}`;
       const mObj = monthList.find(x => x.value === selectedMonth);
-      return { 
-        start, 
-        end, 
-        label: `${mObj ? mObj.label : m} ${selectedYear}` 
+      return {
+        start,
+        end,
+        label: `${mObj ? mObj.label : m} ${selectedYear}`
       };
     }
 
@@ -163,10 +163,10 @@ export const ExportModal = ({
         start = end;
         end = tmp;
       }
-      return { 
-        start, 
-        end, 
-        label: `${formatHumanDate(start)} — ${formatHumanDate(end)}` 
+      return {
+        start,
+        end,
+        label: `${formatHumanDate(start)} — ${formatHumanDate(end)}`
       };
     }
 
@@ -228,8 +228,8 @@ export const ExportModal = ({
 
   return (
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
-      <div 
-        className="modal-content export-fixed-card" 
+      <div
+        className="modal-content export-fixed-card"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -243,9 +243,9 @@ export const ExportModal = ({
               <p className="export-fixed-desc">{t('exportModal.subtitle')}</p>
             </div>
           </div>
-          <button 
-            type="button" 
-            className="modal-close-btn" 
+          <button
+            type="button"
+            className="modal-close-btn"
             onClick={onClose}
             aria-label="Close"
           >

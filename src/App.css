@@ -1327,7 +1327,301 @@
   outline: none;
 }
 
-/* Transaction List Feed inside Card */
+/* Gojek-style Transactions Feed & Date Grouping */
+.gojek-transactions-feed {
+  background: var(--bg-primary);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.gojek-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Gojek Date Boundary Header (Pembatas Tanggal) */
+.gojek-date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 4px;
+}
+
+.gojek-date-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gojek-date-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.gojek-date-pill.is-today {
+  background: rgba(0, 136, 13, 0.1);
+  color: #00880d;
+  border-color: rgba(0, 136, 13, 0.3);
+}
+
+[data-theme='dark'] .gojek-date-pill.is-today {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.gojek-date-pill.is-yesterday {
+  background: var(--accent-subtle);
+  color: var(--accent-primary);
+  border-color: var(--accent-border);
+}
+
+.gojek-date-pill-icon {
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.gojek-date-pill-text {
+  line-height: 1;
+}
+
+.gojek-date-subtext {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.gojek-date-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.gojek-date-count {
+  font-weight: 500;
+}
+
+.gojek-date-sep {
+  opacity: 0.4;
+}
+
+.gojek-date-total {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
+/* Gojek Date Card Container */
+.gojek-date-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 2px 8px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Gojek Transaction Row Item */
+.gojek-transaction-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color var(--transition-fast);
+  cursor: pointer;
+  user-select: none;
+}
+
+.gojek-transaction-row:last-child {
+  border-bottom: none;
+}
+
+.gojek-transaction-row:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.gojek-icon-tile {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-width: 1px;
+  border-style: solid;
+  transition: transform var(--transition-fast);
+}
+
+.gojek-transaction-row:hover .gojek-icon-tile {
+  transform: scale(1.05);
+}
+
+.gojek-tx-content {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gojek-tx-main-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gojek-tx-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gojek-tx-cat-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--bg-tertiary);
+  padding: 1px 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.gojek-tx-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gojek-meta-time {
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.gojek-meta-sep {
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.gojek-meta-method {
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.gojek-meta-notes {
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gojek-tx-amount-block {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.gojek-tx-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.gojek-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #00880d;
+  background: rgba(0, 136, 13, 0.09);
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(0, 136, 13, 0.2);
+  line-height: 1;
+}
+
+[data-theme='dark'] .gojek-status-badge {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.25);
+}
+
+.gojek-status-icon {
+  flex-shrink: 0;
+}
+
+.gojek-tx-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.35;
+  transition: opacity var(--transition-fast);
+}
+
+.gojek-transaction-row:hover .gojek-tx-actions {
+  opacity: 1;
+}
+
+.gojek-action-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: transparent;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+}
+
+.gojek-action-btn:hover {
+  color: var(--accent-primary);
+  background: var(--bg-tertiary);
+}
+
+.gojek-action-btn.btn-delete:hover {
+  color: var(--color-danger);
+  background: rgba(220, 38, 38, 0.08);
+}
+
+/* Legacy / Fallback Modern Transaction List Feed */
 .modern-transaction-list {
   background: var(--bg-card);
   display: flex;
@@ -8235,6 +8529,119 @@ select.expense-input {
   .tx-action-btn {
     width: 24px !important;
     height: 24px !important;
+  }
+
+  /* Responsive Gojek Transactions on Mobile */
+  .gojek-transactions-feed {
+    padding: 12px 10px !important;
+    gap: 16px !important;
+  }
+
+  .gojek-date-header {
+    padding: 2px 4px !important;
+  }
+
+  .gojek-date-header-left {
+    gap: 6px !important;
+  }
+
+  .gojek-date-pill {
+    font-size: 0.76rem !important;
+    padding: 3px 8px !important;
+    gap: 4px !important;
+  }
+
+  .gojek-date-subtext {
+    font-size: 0.72rem !important;
+  }
+
+  .gojek-date-header-right {
+    font-size: 0.72rem !important;
+    gap: 5px !important;
+  }
+
+  .gojek-date-total {
+    font-size: 0.82rem !important;
+  }
+
+  .gojek-date-card {
+    border-radius: 14px !important;
+  }
+
+  .gojek-transaction-row {
+    grid-template-columns: 40px 1fr auto !important;
+    grid-template-areas:
+      "icon main amount"
+      "icon meta actions" !important;
+    gap: 4px 10px !important;
+    padding: 11px 12px !important;
+    align-items: center !important;
+  }
+
+  .gojek-icon-tile {
+    grid-area: icon !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  .gojek-tx-content {
+    grid-area: main !important;
+    gap: 2px !important;
+  }
+
+  .gojek-tx-title {
+    font-size: 0.88rem !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    line-height: 1.25 !important;
+  }
+
+  .gojek-tx-cat-chip {
+    font-size: 0.66rem !important;
+    padding: 1px 5px !important;
+  }
+
+  .gojek-tx-meta-line {
+    grid-area: meta !important;
+    font-size: 0.7rem !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+  }
+
+  .gojek-tx-amount-block {
+    grid-area: amount !important;
+    text-align: right !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: flex-end !important;
+    gap: 2px !important;
+  }
+
+  .gojek-tx-amount {
+    font-size: 0.94rem !important;
+  }
+
+  .gojek-status-badge {
+    font-size: 0.66rem !important;
+    padding: 1px 5px !important;
+    gap: 2px !important;
+  }
+
+  .gojek-tx-actions {
+    grid-area: actions !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 3px !important;
+    opacity: 1 !important;
+  }
+
+  .gojek-action-btn {
+    width: 26px !important;
+    height: 26px !important;
   }
 
   .modern-empty-state {
