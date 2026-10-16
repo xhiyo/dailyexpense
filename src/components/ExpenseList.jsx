@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Edit2, Trash2, Plus, Calendar, CheckCircle2 } from 'lucide-react';
+import { Search, Edit2, Trash2, Plus } from 'lucide-react';
 import { getCategoryById, CATEGORIES, PAYMENT_METHODS, hexToRgba } from '../data/categories';
-import { CategoryIcon } from './CategoryIcon';
 import { formatCurrency } from '../utils/storage';
 import { useTranslation } from '../i18n/LanguageContext';
 
@@ -359,25 +358,17 @@ export const ExpenseList = ({
         <div className="gojek-transactions-feed" id="transactions-feed">
           {groupedExpenses.map((group) => (
             <div key={group.dateKey} className="gojek-date-group">
-              {/* Pembatas Tanggal / Gojek Date Boundary Header */}
+              {/* Pembatas Tanggal / Clean Date Boundary Header */}
               <div className="gojek-date-header">
                 <div className="gojek-date-header-left">
-                  <span
-                    className={`gojek-date-pill ${
-                      group.dateInfo.isToday
-                        ? 'is-today'
-                        : group.dateInfo.isYesterday
-                          ? 'is-yesterday'
-                          : ''
-                    }`}
-                  >
-                    <Calendar size={13} className="gojek-date-pill-icon" />
-                    <span className="gojek-date-pill-text">{group.dateInfo.title}</span>
-                  </span>
+                  <span className="gojek-date-title">{group.dateInfo.title}</span>
                   {group.dateInfo.subtitle && (
-                    <span className="gojek-date-subtext">
-                      {group.dateInfo.subtitle}
-                    </span>
+                    <>
+                      <span className="gojek-date-dot">•</span>
+                      <span className="gojek-date-subtext">
+                        {group.dateInfo.subtitle}
+                      </span>
+                    </>
                   )}
                 </div>
 
@@ -397,7 +388,7 @@ export const ExpenseList = ({
                 </div>
               </div>
 
-              {/* Gojek Date Card containing transactions for this date */}
+              {/* Transactions list card for this date */}
               <div className="gojek-date-card">
                 {group.items.map((expense) => {
                   const cat = getCategoryById(expense.categoryId, categories);
@@ -420,24 +411,14 @@ export const ExpenseList = ({
                       }}
                       title={language === 'en' ? 'Click to edit expense' : 'Klik untuk edit transaksi'}
                     >
-                      {/* Category Icon Tile */}
-                      <div
-                        className="gojek-icon-tile"
-                        style={{
-                          backgroundColor: cat.bgLight || hexToRgba(cat.color || '#2563eb', 0.12),
-                          borderColor: cat.border || hexToRgba(cat.color || '#2563eb', 0.28)
-                        }}
-                      >
-                        <CategoryIcon
-                          name={cat.icon}
-                          size={22}
-                          color={cat.color || '#2563eb'}
-                        />
-                      </div>
-
                       {/* Main Transaction Details */}
                       <div className="gojek-tx-content">
                         <div className="gojek-tx-main-line">
+                          <span
+                            className="tx-category-indicator"
+                            style={{ backgroundColor: cat.color || 'var(--accent-primary, #2563eb)' }}
+                            title={localizedCatName}
+                          />
                           <span className="gojek-tx-title" title={expense.title}>
                             {expense.title}
                           </span>
@@ -467,46 +448,40 @@ export const ExpenseList = ({
                         </div>
                       </div>
 
-                      {/* Amount & Status Badge */}
-                      <div className="gojek-tx-amount-block">
+                      {/* Amount & Quick Actions */}
+                      <div className="gojek-tx-right-block">
                         <span className="gojek-tx-amount font-mono">
                           -{formatCurrency(expense.amount, currency)}
                         </span>
-                        <span className="gojek-status-badge">
-                          <CheckCircle2 size={11} className="gojek-status-icon" />
-                          <span>{language === 'en' ? 'Completed' : 'Berhasil'}</span>
-                        </span>
-                      </div>
-
-                      {/* Quick Actions (Edit & Delete) */}
-                      <div
-                        className="gojek-tx-actions"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          type="button"
-                          className="gojek-action-btn btn-edit"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onEditExpense && onEditExpense(expense);
-                          }}
-                          title={t('common.edit')}
-                          aria-label="Edit expense"
+                        <div
+                          className="gojek-tx-actions"
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          className="gojek-action-btn btn-delete"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteExpense && onDeleteExpense(expense.id);
-                          }}
-                          title={t('common.delete')}
-                          aria-label="Delete expense"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                          <button
+                            type="button"
+                            className="gojek-action-btn btn-edit"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditExpense && onEditExpense(expense);
+                            }}
+                            title={t('common.edit')}
+                            aria-label="Edit expense"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            className="gojek-action-btn btn-delete"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteExpense && onDeleteExpense(expense.id);
+                            }}
+                            title={t('common.delete')}
+                            aria-label="Delete expense"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
